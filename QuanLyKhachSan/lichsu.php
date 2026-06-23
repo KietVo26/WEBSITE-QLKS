@@ -15,6 +15,8 @@ if (isset($_SESSION['role']) && $_SESSION['role'] != 'khach') {
     exit;
 }
 
+
+
 $userid = $_SESSION['user_id'];
 $kh_res = $conn->query("SELECT MaKH FROM KhachHang WHERE MaTK = $userid");
 $makh = null;
