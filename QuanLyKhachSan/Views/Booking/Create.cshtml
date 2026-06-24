@@ -1,0 +1,119 @@
+﻿@{
+    ViewData["Title"] = "Lập Phiếu Đặt Phòng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var customers = ViewBag.Customers as IEnumerable<QuanLyKhachSan.Models.KhachHang> ?? new List<QuanLyKhachSan.Models.KhachHang>();
+    var rooms = ViewBag.Rooms as IEnumerable<QuanLyKhachSan.Models.Phong> ?? new List<QuanLyKhachSan.Models.Phong>();
+    var selectedRoom = ViewBag.SelectedRoom as string ?? "";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-calendar-check text-primary me-2"></i> Lập Phiếu Đặt Phòng</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card p-4 border-0 shadow-sm">
+            <form asp-controller="Booking" asp-action="Create" method="post">
+                <div class="mb-3">
+                    <label class="form-label fw-medium text-secondary">Khách Hàng (*)</label>
+                    <div class="d-flex gap-2">
+                        <select name="makh" class="form-select bg-light border-0" required>
+                            <option value="">-- Chọn Khách Hàng --</option>
+                            @foreach (var kh in customers)
+                            {
+                                <option value="@kh.MaKH">
+                                    @kh.HoTen (CCCD: @kh.CCCD)
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-success rounded-3" data-bs-toggle="modal" data-bs-target="#fastKhachModal">
+                            <i class="fa-solid fa-plus me-1"></i>Tạo nhanh khách hàng mới ngay
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-medium text-secondary">Chọn Phòng Trống (*)</label>
+                    <select name="maphong" class="form-select bg-light border-0" required>
+                        <option value="">-- Chọn Phòng --</option>
+                        @foreach (var room in rooms)
+                        {
+                            <!option value="@room.MaPhong" @(room.MaPhong == selectedRoom ? "selected" : "")>
+                                Phòng @room.MaPhong — @room.LoaiPhong.TenLoai (@room.LoaiPhong.GiaPhong.ToString("N0") đ)
+                            </!option>
+                        }
+                    </select>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium text-secondary">Ngày Check-in (*)</label>
+                        <input type="datetime-local" name="ngayvao" class="form-control bg-light border-0" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium text-secondary">Ngày Check-out (*)</label>
+                        <input type="datetime-local" name="ngayra" class="form-control bg-light border-0" value="@DateTime.Now.AddDays(1).ToString("yyyy-MM-ddTHH:mm")" required />
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary rounded-3 px-4 py-2"><i class="fa-solid fa-circle-check me-1"></i>Hoàn tất đặt phòng</button>
+                    <a asp-controller="Admin" asp-action="RoomMap" class="btn btn-light rounded-3 px-4 py-2">Quay lại sơ đồ</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hướng Dẫn & Thông Tin Phân Khu -->
+    <div class="col-md-6">
+        <div class="card p-4 border-0 shadow-sm" style="background-color: #FAF8F3;">
+            <h4 class="fw-bold mb-3"><i class="fa-solid fa-circle-info text-info me-1"></i> Lưu ý nghiệp vụ</h4>
+            <ul class="text-muted small leading-relaxed">
+                <li class="mb-2"><strong>Đơn đặt tại quầy:</strong> Mặc định trạng thái đơn sẽ được thiết lập là <strong>"Đã xác nhận"</strong>. Phòng vẫn ở trạng thái "Trống" cho tới khi Lễ tân bấm nút <strong>"🔑 Nhận phòng (Check-in)"</strong> ở Sơ đồ phòng.</li>
+                <li class="mb-2"><strong>Khách hàng mới:</strong> Sử dụng nút "Tạo nhanh khách hàng mới" để thêm thông tin Họ tên, CCCD, SĐT của khách hàng vãng lai ngay lập tức mà không cần chuyển màn hình.</li>
+                <li class="mb-2"><strong>Chống trùng lịch:</strong> Hệ thống sẽ tự động quét toàn bộ đơn đặt phòng hiện có và ngăn chặn việc đặt phòng nếu phát hiện khoảng thời gian Check-in/Check-out bị trùng lặp.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- QUICK CUSTOMER MODAL -->
+<div class="modal fade" id="fastKhachModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-plus me-1 text-success"></i> Thêm Khách Hàng Nhanh</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-controller="Booking" asp-action="AddCustomerQuick" method="post">
+                <input type="hidden" name="maphong" value="@selectedRoom" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Họ và Tên (*)</label>
+                        <input type="text" name="hoten" class="form-control" placeholder="VD: Nguyễn Văn A" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số CCCD (*)</label>
+                        <input type="text" name="cccd" class="form-control" placeholder="VD: 079123456789" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số Điện Thoại (*)</label>
+                        <input type="text" name="sdt" class="form-control" placeholder="VD: 0909123456" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" placeholder="VD: khachhang@gmail.com" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-save me-1"></i>Lưu khách hàng</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

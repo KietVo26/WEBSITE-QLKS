@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — K-Hotel</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/assets/css/style.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- HEADER CUSTOMER -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom hilton-nav sticky-top shadow-sm py-3">
+      <div class="container px-4">
+        <a class="navbar-brand fw-bold fs-3 text-dark text-center" style="font-family: 'Cormorant Garamond', serif; border: 2px solid #000; padding: 0 10px; line-height: 1.2;" asp-controller="Home" asp-action="Index">
+            K-Hotel<br>
+            <span style="font-size: 0.6rem; letter-spacing: 1px; display: block; border-top: 1px solid #000; font-family: 'DM Sans', sans-serif; font-weight: bold; margin-top: 2px;">FOR THE STAY</span>
+        </a>
+        
+        <button class="navbar-toggler text-dark border-0 shadow-none p-2" type="button" data-bs-toggle="collapse" data-bs-target="#navCustomer">
+          <i class="fa-solid fa-bars fs-1"></i>
+        </button>
+        
+        <div class="collapse navbar-collapse py-3 py-lg-0" id="navCustomer">
+            <ul class="navbar-nav me-auto ms-lg-4 gap-3">
+                <li class="nav-item">
+                    <a class="nav-link text-dark fw-medium" asp-controller="Home" asp-action="Index">Trang chủ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark fw-medium" asp-controller="Home" asp-action="Search">Tìm phòng & Đặt chỗ</a>
+                </li>
+                @if (User.Identity?.IsAuthenticated == true && User.IsInRole("khach"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-dark fw-medium" asp-controller="Booking" asp-action="BookingHistory">
+                            <i class="fa-solid fa-clock-rotate-left me-1"></i>Lịch sử đặt phòng
+                        </a>
+                    </li>
+                }
+            </ul>
+            
+            <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="dropdown">
+                        <a class="nav-link dropdown-toggle fw-bold text-dark" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fa-regular fa-user-circle fs-5 me-1 align-middle text-primary"></i> @(User.Identity.Name ?? "Khách Hàng")
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-3 mt-2">
+                            @if (User.IsInRole("khach"))
+                            {
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Booking" asp-action="BookingHistory">
+                                        <i class="fa-solid fa-clock-rotate-left me-2 text-muted"></i>Lịch sử lưu trú
+                                    </a>
+                                </li>
+                            }
+                            @if (User.IsInRole("admin") || User.IsInRole("nhanvien"))
+                            {
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-primary fw-bold" asp-controller="Admin" asp-action="RoomMap">
+                                        <i class="fa-solid fa-gauge me-2"></i>Trang Quản Trị
+                                    </a>
+                                </li>
+                            }
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" asp-controller="Account" asp-action="Logout">
+                                    <i class="fa-solid fa-sign-out-alt me-2"></i>Đăng xuất
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-dark fw-bold rounded-1 px-4 py-2" style="background-color: #0d0d0f; border-color: #0d0d0f;">Đăng nhập</a>
+                }
+            </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- CONTENT BODY -->
+    <div class="container-fluid p-0">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="container mt-4">
+                <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert" style="border-left: 5px solid #28a745 !important;">
+                    <i class="fa-solid fa-circle-check me-2 text-success"></i> @Html.Raw(TempData["SuccessMessage"])
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="container mt-4">
+                <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert" style="border-left: 5px solid #dc3545 !important;">
+                    <i class="fa-solid fa-circle-exclamation me-2 text-danger"></i> @Html.Raw(TempData["ErrorMessage"])
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+        
+        @RenderBody()
+    </div>
+
+    <!-- FOOTER CUSTOMER -->
+    <footer class="bg-dark text-light py-5 mt-5" style="background-color: #0D0D0F !important;">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h5 class="fw-bold text-gold font-serif mb-3" style="color: #C8A96E; font-size: 1.5rem;">🏨 K-Hotel</h5>
+                    <p class="small text-muted">Trải nghiệm nghỉ dưỡng đẳng cấp thượng lưu với hệ thống khách sạn cao cấp trải dài khắp cả nước.</p>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="fw-bold mb-3">Liên Kết</h6>
+                    <ul class="list-unstyled small">
+                        <li><a asp-controller="Home" asp-action="Index" class="text-muted text-decoration-none">Trang chủ</a></li>
+                        <li><a asp-controller="Home" asp-action="Search" class="text-muted text-decoration-none">Tìm phòng & Đặt chỗ</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="fw-bold mb-3">Liên Hệ</h6>
+                    <ul class="list-unstyled small text-muted">
+                        <li><i class="fa-solid fa-envelope me-2"></i> kietvo.260605@gmail.com</li>
+                        <li><i class="fa-solid fa-phone me-2"></i> +84 933 456 789</li>
+                        <li><i class="fa-solid fa-location-dot me-2"></i> Phan Thiết, Đà Nẵng, Hà Nội, Hồ Chí Minh, Tây Ninh</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="border-secondary my-4">
+            <div class="text-center text-muted small">
+                &copy; @DateTime.Now.Year K-Hotel — Trân trọng phục vụ quý khách. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,124 @@
+﻿@model IEnumerable<QuanLyKhachSan.Models.Voucher>
+@{
+    ViewData["Title"] = "Quản Lý Voucher";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-ticket text-primary me-2"></i> Danh Sách Voucher Khuyến Mãi</h2>
+        <p class="text-muted">Quản lý mã giảm giá, voucher tặng tự động và phát hành voucher mới.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- VOUCHERS LIST -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark" style="background-color: #0D0D0F;">
+                        <tr>
+                            <th class="ps-3">Mã Code</th>
+                            <th>Tên Voucher</th>
+                            <th>Mức Giảm</th>
+                            <th>Đơn Tối Thiểu</th>
+                            <th>Hết Hạn</th>
+                            <th>Lượt Dùng (Đã / Tối đa)</th>
+                            <th>Trạng Thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var v in Model)
+                        {
+                            var statusBadge = v.TrangThai == "active" ? "bg-success" : "bg-secondary";
+                            var valueStr = v.LoaiGiam == "phantram" ? $"{v.GiaTriGiam:N0}%" : $"{v.GiaTriGiam:N0} đ";
+
+                            <tr>
+                                <td class="ps-3"><span class="badge bg-light text-dark border fw-bold font-monospace fs-6">@v.Code</span></td>
+                                <td>
+                                    <span class="fw-bold text-dark d-block">@v.TenVoucher</span>
+                                    @if (v.KhachHang != null)
+                                    {
+                                        <small class="text-primary"><i class="fa-solid fa-user me-1"></i>Dành riêng: @v.KhachHang.HoTen</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted"><i class="fa-solid fa-globe me-1"></i>Toàn hệ thống</small>
+                                    }
+                                </td>
+                                <td class="fw-bold text-danger">@valueStr</td>
+                                <td>@v.GiaTriToiThieu.ToString("N0") đ</td>
+                                <td class="text-muted">@v.NgayHetHan.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <span class="fw-bold">@v.SoLanDaDung</span> / @v.GioiHanDung
+                                </td>
+                                <td>
+                                    <span class="badge @statusBadge px-2 py-1 rounded-2">@v.TrangThai</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD VOUCHER FORM -->
+    <div class="col-md-4">
+        <div class="card p-4 border-0 shadow-sm rounded-4" style="background-color: #FAF8F3;">
+            <h4 class="fw-bold mb-3"><i class="fa-solid fa-plus-circle text-success me-1"></i>Tạo Voucher Mới</h4>
+            
+            <form asp-controller="Admin" asp-action="AddVoucher" method="post">
+                @Html.AntiForgeryToken()
+                
+                <div class="mb-2">
+                    <label class="form-label small fw-bold text-secondary">Mã Voucher (*)</label>
+                    <input type="text" name="code" class="form-control" placeholder="VD: LUCK15" required style="text-transform: uppercase;" />
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small fw-bold text-secondary">Tên Voucher (*)</label>
+                    <input type="text" name="name" class="form-control" placeholder="VD: Giảm giá hè 15%" required />
+                </div>
+
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-secondary">Loại giảm (*)</label>
+                        <select name="type" class="form-select" required>
+                            <option value="phantram">Phần trăm (%)</option>
+                            <option value="sotien">Số tiền (đ)</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-secondary">Giá trị giảm (*)</label>
+                        <input type="number" name="value" class="form-control" min="1" required />
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-secondary">Đơn tối thiểu (*)</label>
+                        <input type="number" name="minAmount" class="form-control" min="0" value="0" required />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-secondary">Giới hạn lượt dùng</label>
+                        <input type="number" name="limit" class="form-control" min="1" value="1" required />
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small fw-bold text-secondary">Ngày hết hạn (*)</label>
+                    <input type="date" name="expiry" class="form-control" value="@DateTime.Today.AddMonths(1).ToString("yyyy-MM-dd")" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary">Ghi chú</label>
+                    <textarea name="note" class="form-control" rows="2" placeholder="Ghi chú điều kiện..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 py-2"><i class="fa-solid fa-save me-1"></i>Phát hành Voucher</button>
+            </form>
+        </div>
+    </div>
+</div>

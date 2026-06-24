@@ -1,0 +1,81 @@
+﻿@model IEnumerable<QuanLyKhachSan.Models.DatPhong>
+@{
+    ViewData["Title"] = "Lịch sử đặt phòng";
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h2 class="fw-bold font-serif m-0" style="font-family: 'Cormorant Garamond', serif;"><i class="fa-solid fa-clock-rotate-left text-gold me-2" style="color: #C8A96E;"></i> Lịch sử đặt phòng của bạn</h2>
+        <a asp-controller="Home" asp-action="Search" class="btn btn-dark rounded-3" style="background-color: #0D0D0F; color: #C8A96E; border-color: #0D0D0F;"><i class="fa-solid fa-plus me-1"></i>Đặt thêm phòng mới</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 bg-light rounded-4">
+            <i class="fa-solid fa-calendar-xmark fs-1 text-muted mb-3"></i>
+            <h4 class="fw-bold text-muted">Bạn chưa có đơn đặt phòng nào!</h4>
+            <p class="text-muted">Các phòng bạn đã đặt trực tuyến hoặc tại quầy sẽ xuất hiện ở đây.</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark mt-3 rounded-3">Khám phá ngay</a>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark" style="background-color: #0D0D0F;">
+                        <tr>
+                            <th class="ps-4">Mã Đơn</th>
+                            <th>Phòng</th>
+                            <th>Hạng Phòng</th>
+                            <th>Ngày Check-in</th>
+                            <th>Ngày Check-out</th>
+                            <th>Ghi chú / Nguồn</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var dp in Model)
+                        {
+                            var statusBadge = "bg-secondary";
+                            switch (dp.TrangThai)
+                            {
+                                case "Chờ xác nhận":
+                                    statusBadge = "bg-warning text-dark";
+                                    break;
+                                case "Đã xác nhận":
+                                    statusBadge = "bg-primary";
+                                    break;
+                                case "Đang ở":
+                                    statusBadge = "bg-danger";
+                                    break;
+                                case "Đã thanh toán":
+                                case "Đã thanh toán (Online)":
+                                    statusBadge = "bg-success";
+                                    break;
+                                case "Đã huỷ":
+                                    statusBadge = "bg-dark";
+                                    break;
+                            }
+                            
+                            <tr>
+                                <td class="fw-bold ps-4 text-primary">#@dp.MaDP</td>
+                                <td class="fw-bold">Phòng @dp.MaPhong</td>
+                                <td>@dp.Phong.LoaiPhong.TenLoai</td>
+                                <td>@dp.NgayCheckIn.ToString("HH:mm dd/MM/yyyy")</td>
+                                <td>@(dp.NgayCheckOut.HasValue ? dp.NgayCheckOut.Value.ToString("HH:mm dd/MM/yyyy") : "—")</td>
+                                <td>
+                                    <span class="small text-muted d-block">@dp.GhiChu</span>
+                                    <span class="badge bg-light text-dark border">@dp.NguonDat</span>
+                                </td>
+                                <td>
+                                    <span class="badge @statusBadge rounded-2 px-2 py-1">@dp.TrangThai</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,56 @@
+﻿@model IEnumerable<QuanLyKhachSan.Models.NhanVien>
+@{
+    ViewData["Title"] = "Quản Lý Nhân Viên";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-user-tie text-primary me-2"></i> Danh Sách Nhân Viên</h2>
+        <p class="text-muted">Quản lý chức vụ, lương bổng và thông tin liên hệ của nhân sự khách sạn.</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark" style="background-color: #0D0D0F;">
+                <tr>
+                    <th class="ps-4">Họ và Tên</th>
+                    <th>Chức Vụ</th>
+                    <th>Ca Mặc Định</th>
+                    <th>Lương Cơ Bản</th>
+                    <th>Số Điện Thoại</th>
+                    <th>Email</th>
+                    <th>Ngày Vào Làm</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var nv in Model)
+                {
+                    <tr>
+                        <td class="fw-bold ps-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:36px; height:36px; font-weight:bold;">
+                                    @nv.TaiKhoan.HoTen.Substring(0, 1).ToUpper()
+                                </div>
+                                <div>
+                                    <span class="text-dark d-block">@nv.TaiKhoan.HoTen</span>
+                                    <small class="text-muted">Username: @nv.TaiKhoan.TenDangNhap</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">@nv.ChucVu</span>
+                        </td>
+                        <td>@nv.CaLamViec</td>
+                        <td class="text-danger fw-bold">@nv.Luong.ToString("N0") đ</td>
+                        <td>@(string.IsNullOrEmpty(nv.SDT) ? "—" : nv.SDT)</td>
+                        <td>@(string.IsNullOrEmpty(nv.Email) ? "—" : nv.Email)</td>
+                        <td class="text-muted">@(nv.NgayVaoLam.HasValue ? nv.NgayVaoLam.Value.ToString("dd/MM/yyyy") : "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

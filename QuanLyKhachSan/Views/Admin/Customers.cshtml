@@ -1,0 +1,52 @@
+﻿@model IEnumerable<QuanLyKhachSan.Models.KhachHang>
+@{
+    ViewData["Title"] = "Quản Lý Khách Hàng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-users text-primary me-2"></i> Danh Sách Khách Hàng</h2>
+        <p class="text-muted">Thông tin thành viên khách sạn, số căn cước, thứ hạng và điểm tích lũy.</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark" style="background-color: #0D0D0F;">
+                <tr>
+                    <th class="ps-4">Mã KH</th>
+                    <th>Họ và Tên</th>
+                    <th>Số CCCD</th>
+                    <th>Số Điện Thoại</th>
+                    <th>Email</th>
+                    <th>Hạng Thành Viên</th>
+                    <th>Điểm Tích Lũy</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var kh in Model)
+                {
+                    var rankBadge = "bg-secondary";
+                    if (kh.HangThanhVien == "Vàng") rankBadge = "bg-warning text-dark";
+                    else if (kh.HangThanhVien == "Bạc") rankBadge = "bg-light text-dark border";
+
+                    <tr>
+                        <td class="ps-4 fw-bold text-muted">#@kh.MaKH</td>
+                        <td class="fw-bold text-dark">@kh.HoTen</td>
+                        <td>@kh.CCCD</td>
+                        <td>@kh.SDT</td>
+                        <td>@(string.IsNullOrEmpty(kh.Email) ? "—" : kh.Email)</td>
+                        <td>
+                            <span class="badge @rankBadge px-2 py-1 rounded-2">
+                                <i class="fa-solid fa-medal me-1"></i>@kh.HangThanhVien
+                            </span>
+                        </td>
+                        <td class="fw-bold text-primary">@kh.DiemTichLuy đ</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

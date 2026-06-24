@@ -1,0 +1,106 @@
+﻿@model QuanLyKhachSan.Models.DatPhong
+@{
+    ViewData["Title"] = "Thêm Dịch Vụ Cho Phòng " + Model.MaPhong;
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var services = ViewBag.Services as IEnumerable<QuanLyKhachSan.Models.DichVu> ?? new List<QuanLyKhachSan.Models.DichVu>();
+    var usedServices = ViewBag.UsedServices as IEnumerable<QuanLyKhachSan.Models.SuDungDichVu> ?? new List<QuanLyKhachSan.Models.SuDungDichVu>();
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-bell-concierge text-primary me-2"></i> Thêm Dịch Vụ — Phòng @Model.MaPhong</h2>
+        <p class="text-muted mb-0">Khách hàng: <strong>@Model.KhachHang.HoTen</strong> | Check-in từ: @Model.NgayCheckIn.ToString("dd/MM HH:mm")</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- ADD SERVICE FORM -->
+    <div class="col-md-5">
+        <div class="card p-4 border-0 shadow-sm">
+            <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-plus-circle text-success me-1"></i> Ghi nhận sử dụng</h4>
+            
+            <form asp-controller="Admin" asp-action="AddService" method="post">
+                <input type="hidden" name="bookingId" value="@Model.MaDP" />
+                
+                <div class="mb-3">
+                    <label class="form-label fw-medium text-secondary">Chọn Dịch Vụ (*)</label>
+                    <select name="serviceId" class="form-select bg-light border-0" required>
+                        <option value="">-- Chọn Dịch Vụ --</option>
+                        @foreach (var s in services)
+                        {
+                            <option value="@s.MaDV">
+                                @s.TenDV (@s.GiaDV.ToString("N0") đ)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-medium text-secondary">Số Lượng (*)</label>
+                    <input type="number" name="quantity" class="form-control bg-light border-0" min="1" value="1" required />
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary rounded-3 px-4"><i class="fa-solid fa-save me-1"></i>Thêm dịch vụ</button>
+                    <a asp-controller="Admin" asp-action="RoomMap" class="btn btn-light rounded-3">Quay lại sơ đồ</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- USED SERVICES TABLE -->
+    <div class="col-md-7">
+        <div class="card p-4 border-0 shadow-sm h-100">
+            <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-list text-primary me-1"></i> Dịch vụ đã dùng trong phòng</h4>
+            
+            @if (!usedServices.Any())
+            {
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-circle-info fs-2 mb-2"></i>
+                    <p class="m-0">Chưa ghi nhận sử dụng dịch vụ nào cho phòng này.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Tên Dịch Vụ</th>
+                                <th>Đơn Giá</th>
+                                <th>SL</th>
+                                <th>Thành Tiền</th>
+                                <th class="text-center">Tác vụ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var usd in usedServices)
+                            {
+                                <tr>
+                                    <td class="small text-muted">@usd.ThoiGian.ToString("HH:mm dd/MM")</td>
+                                    <td class="fw-bold">@usd.DichVu.TenDV</td>
+                                    <td>@usd.DichVu.GiaDV.ToString("N0") đ</td>
+                                    <td>@usd.SoLuong</td>
+                                    <td class="text-danger fw-bold">@usd.ThanhTien.ToString("N0") đ</td>
+                                    <td class="text-center">
+                                        <form asp-controller="Admin" asp-action="RemoveService" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xoá dịch vụ này?');">
+                                            <input type="hidden" name="id" value="@usd.MaSD" />
+                                            <button type="submit" class="btn btn-link text-danger p-0 border-0" title="Xoá"><i class="fa-solid fa-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold">Tổng tiền dịch vụ:</td>
+                                <td colspan="2" class="text-danger fw-bold fs-5">@usedServices.Sum(x => x.ThanhTien).ToString("N0") đ</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
