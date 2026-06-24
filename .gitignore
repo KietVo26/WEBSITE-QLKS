@@ -1,0 +1,9 @@
+﻿## Ignore Visual Studio & .NET build artifacts
+[Bb]in/
+[Oo]bj/
+.vs/
+.vscode/
+*.user
+appsettings.Development.json
+*.db
+*.log

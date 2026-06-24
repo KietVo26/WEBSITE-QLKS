@@ -1,0 +1,365 @@
+@{
+    ViewData["Title"] = "Đăng Nhập";
+    Layout = null; // Do trang đăng nhập có CSS bao phủ toàn trang riêng biệt
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập — K-Hotel</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Inline styles mimicking PHP login.php -->
+    <style>
+        :root {
+            --obsidian:   #0C0C0E;
+            --obsidian2:  #131318;
+            --obsidian3:  #1A1A22;
+            --gold:       #C8A96E;
+            --gold-light: #E2C98D;
+            --white:      #FFFFFF;
+            --text-muted: rgba(255,255,255,0.38);
+            --text-soft:  rgba(255,255,255,0.62);
+            --text-main:  rgba(255,255,255,0.88);
+            --border-dim: rgba(255,255,255,0.07);
+            --radius:     14px;
+            --serif:      'Cormorant Garamond', Georgia, serif;
+            --sans:       'DM Sans', system-ui, sans-serif;
+            --ease:       cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            font-family: var(--sans);
+            background: var(--obsidian);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+        }
+
+        .page {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .bg-texture {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-texture::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+            opacity: 0.4;
+        }
+
+        .bg-texture::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 600px 500px at 15% 80%, rgba(200,169,110,0.07) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 400px at 85% 20%, rgba(200,169,110,0.05) 0%, transparent 70%);
+        }
+
+        /* LEFT VISUAL PANEL */
+        .panel-left {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 0 0 60px 60px;
+        }
+
+        @@media (max-width: 991px) {
+            .panel-left { display: none; }
+        }
+
+        .panel-left-img {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
+
+        .panel-left-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.45) saturate(0.8);
+        }
+
+        .panel-left-content {
+            position: relative;
+            z-index: 2;
+            max-width: 500px;
+        }
+
+        .panel-left-content h1 {
+            font-family: var(--serif);
+            font-size: 3.2rem;
+            font-weight: 500;
+            line-height: 1.15;
+            margin-bottom: 15px;
+            color: var(--white);
+        }
+
+        .panel-left-content p {
+            color: var(--text-soft);
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        /* RIGHT FORM PANEL */
+        .panel-right {
+            width: 550px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px 80px;
+            background: var(--obsidian2);
+            border-left: 1px solid var(--border-dim);
+            position: relative;
+            z-index: 1;
+        }
+
+        @@media (max-width: 576px) {
+            .panel-right { width: 100%; padding: 40px 24px; }
+        }
+
+        .form-header {
+            margin-bottom: 40px;
+        }
+
+        .logo-box {
+            display: inline-block;
+            border: 2px solid var(--gold);
+            padding: 4px 12px;
+            font-family: var(--serif);
+            color: var(--gold);
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .form-header h2 {
+            font-family: var(--serif);
+            font-size: 2.2rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--white);
+        }
+
+        .form-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            color: var(--text-soft);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            background: var(--obsidian3);
+            border: 1px solid var(--border-dim);
+            border-radius: var(--radius);
+            padding: 16px 16px 16px 48px;
+            color: var(--white);
+            font-size: 1rem;
+            outline: none;
+            transition: var(--ease);
+        }
+
+        .input-wrapper input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 10px rgba(200,169,110,0.15);
+        }
+
+        .error-box {
+            background: rgba(220,53,69,0.1);
+            border-left: 4px solid #dc3545;
+            color: #ff6b6b;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+
+        .success-box {
+            background: rgba(40,167,69,0.1);
+            border-left: 4px solid #28a745;
+            color: #2ecc71;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--gold);
+            color: var(--obsidian);
+            border: none;
+            border-radius: var(--radius);
+            padding: 16px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--ease);
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background: var(--gold-light);
+            transform: translateY(-2px);
+        }
+
+        .form-footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .form-footer a {
+            color: var(--gold);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .forgot-pass {
+            text-align: right;
+            margin-top: -12px;
+            margin-bottom: 24px;
+            font-size: 0.85rem;
+        }
+
+        .forgot-pass a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .forgot-pass a:hover {
+            color: var(--gold);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-texture"></div>
+    <div class="page">
+        <!-- LEFT WALLPAPER -->
+        <div class="panel-left">
+            <div class="panel-left-img">
+                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1200" alt="K-Hotel Luxury Room" />
+            </div>
+            <div class="panel-left-content">
+                <h1>Hành Trình Khám Phá Nghỉ Dưỡng Thượng Lưu</h1>
+                <p>Khám phá thế giới của sự xa hoa và riêng tư tuyệt đối tại K-Hotel. Nơi hội tụ tinh hoa trải nghiệm nghỉ dưỡng Việt Nam.</p>
+            </div>
+        </div>
+
+        <!-- RIGHT FORM -->
+        <div class="panel-right">
+            <div class="form-header">
+                <div class="logo-box">K-HOTEL</div>
+                <h2>Chào mừng trở lại</h2>
+                <p>Vui lòng đăng nhập tài khoản của bạn</p>
+            </div>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="error-box">
+                    <i class="fa-solid fa-circle-exclamation me-1"></i> @Html.Raw(ViewBag.Error)
+                </div>
+            }
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="success-box">
+                    <i class="fa-solid fa-circle-check me-1"></i> @TempData["SuccessMessage"]
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="error-box">
+                    <i class="fa-solid fa-circle-exclamation me-1"></i> @TempData["ErrorMessage"]
+                </div>
+            }
+
+            <form asp-controller="Account" asp-action="Login" method="post">
+                @Html.AntiForgeryToken()
+                
+                <div class="input-group">
+                    <label>Tên đăng nhập</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" name="username" placeholder="Nhập tên đăng nhập của bạn" required autofocus />
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Mật khẩu</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" name="password" placeholder="Nhập mật khẩu của bạn" required />
+                    </div>
+                </div>
+
+                <div class="forgot-pass">
+                    <a asp-controller="Account" asp-action="ForgotPassword">Quên mật khẩu?</a>
+                </div>
+
+                <button type="submit" class="btn-submit">Đăng Nhập</button>
+            </form>
+
+            <div class="form-footer">
+                Chưa có tài khoản? <a asp-controller="Account" asp-action="Register">Đăng ký ngay</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

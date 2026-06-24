@@ -1,0 +1,127 @@
+﻿@model IEnumerable<QuanLyKhachSan.Models.Phong>
+@{
+    ViewData["Title"] = "Tìm Phòng Khách Sạn";
+    var allRegions = ViewBag.AllRegions as IEnumerable<string> ?? new List<string>();
+    var keyword = ViewBag.Keyword as string ?? "";
+    var price = ViewBag.Price ?? 5000000;
+    var guest = ViewBag.Guest ?? 0;
+    var amenity = ViewBag.Amenity as string ?? "";
+    var khuvuc = ViewBag.KhuVuc as string ?? "";
+
+    var roomsByRegion = Model.GroupBy(r => r.LoaiPhong.KhuVuc).ToList();
+}
+
+<div class="container py-5">
+    <div class="row g-4">
+        <!-- SIDEBAR FILTERS -->
+        <div class="col-md-3">
+            <div class="card p-4 border-0 shadow-sm rounded-4" style="background-color: #FAF8F3;">
+                <h4 class="fw-bold font-serif mb-4"><i class="fa-solid fa-sliders text-gold me-2" style="color: #C8A96E;"></i> Bộ lọc phòng</h4>
+                <form asp-controller="Home" asp-action="Search" method="get">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Từ khóa</label>
+                        <input type="text" name="q" class="form-control rounded-3" placeholder="Nhập tên phòng, tiện nghi..." value="@keyword" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Khu vực</label>
+                        <select name="khuvuc" class="form-select rounded-3">
+                            <option value="">-- Tất cả khu vực --</option>
+                            @foreach (var r in allRegions)
+                            {
+                                <!option value="@r" @(r == khuvuc ? "selected" : "")>@r</!option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Giá tối đa: <span class="text-danger fw-bold">@price.ToString("N0") ₫</span></label>
+                        <input type="range" name="price" class="form-range" min="100000" max="5000000" step="50000" value="@price" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Số khách</label>
+                        <select name="guest" class="form-select rounded-3">
+                            <!option value="0" @(guest == 0 ? "selected" : "")>Mọi số lượng</!option>
+                            <!option value="1" @(guest == 1 ? "selected" : "")>1 Khách</!option>
+                            <!option value="2" @(guest == 2 ? "selected" : "")>2 Khách</!option>
+                            <!option value="4" @(guest == 4 ? "selected" : "")>4 Khách</!option>
+                            <!option value="6" @(guest == 6 ? "selected" : "")>6 Khách</!option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Tiện nghi ưa thích</label>
+                        <select name="amenity" class="form-select rounded-3">
+                            <option value="">-- Mọi tiện nghi --</option>
+                            <!option value="View biển" @(amenity == "View biển" ? "selected" : "")>View biển</!option>
+                            <!option value="Bồn tắm" @(amenity == "Bồn tắm" ? "selected" : "")>Bồn tắm</!option>
+                            <!option value="Hồ bơi" @(amenity == "Hồ bơi" ? "selected" : "")>Hồ bơi riêng</!option>
+                            <!option value="Ban công" @(amenity == "Ban công" ? "selected" : "")>Ban công</!option>
+                            <!option value="Tivi" @(amenity == "Tivi" ? "selected" : "")>Tivi / Tivi OLED</!option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 rounded-3" style="background-color: #0D0D0F; color: #C8A96E; border-color: #0D0D0F;">Áp dụng bộ lọc</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- SEARCH RESULTS -->
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <h2 class="fw-bold font-serif m-0" style="font-family: 'Cormorant Garamond', serif;">Kết quả tìm kiếm (@Model.Count() phòng trống)</h2>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark btn-sm rounded-3">Quay lại trang chủ</a>
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="fa-solid fa-circle-exclamation fs-1 text-muted mb-3"></i>
+                    <h4 class="fw-bold text-muted">Không tìm thấy phòng trống phù hợp!</h4>
+                    <p class="text-muted">Vui lòng điều chỉnh lại bộ lọc hoặc chọn khoảng thời gian khác.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var regionGroup in roomsByRegion)
+                {
+                    <div class="mb-5">
+                        <h4 class="fw-bold font-serif mb-3 text-gold" style="color: #C8A96E; font-family: 'Cormorant Garamond', serif;"><i class="fa-solid fa-map-location-dot me-2"></i>Khu vực @regionGroup.Key</h4>
+                        <div class="row g-4">
+                            @foreach (var room in regionGroup)
+                            {
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden d-flex flex-column">
+                                        <div class="position-relative">
+                                            <img src="@(room.LoaiPhong.HinhAnh.StartsWith("http") ? room.LoaiPhong.HinhAnh : "/assets/img/" + room.LoaiPhong.HinhAnh)" class="w-100" style="height: 220px; object-fit: cover;" alt="@room.LoaiPhong.TenLoai" />
+                                            <span class="badge bg-success position-absolute top-0 start-0 m-3 px-3 py-2">Còn trống</span>
+                                            <span class="badge bg-dark text-gold position-absolute bottom-0 end-0 m-3 px-3 py-2" style="color:#C8A96E; font-size: 0.95rem;">@room.LoaiPhong.GiaPhong.ToString("N0") ₫ / đêm</span>
+                                        </div>
+                                        
+                                        <div class="card-body p-4 flex-grow-1 d-flex flex-column justify-content-between">
+                                            <div>
+                                                <h5 class="fw-bold font-serif mb-2" style="font-family: 'Cormorant Garamond', serif;">Phòng @room.MaPhong — @room.LoaiPhong.TenLoai</h5>
+                                                <div class="d-flex gap-3 text-muted small mb-3">
+                                                    <span><i class="fa-solid fa-users"></i> Tối đa: @room.LoaiPhong.SoNguoiToiDa khách</span>
+                                                    <span><i class="fa-solid fa-location-dot"></i> @room.LoaiPhong.KhuVuc</span>
+                                                </div>
+                                                <p class="card-text text-muted small"><strong>Tiện nghi:</strong> @room.LoaiPhong.TienNghi</p>
+                                            </div>
+
+                                            <div class="d-grid mt-4">
+                                                <a asp-controller="Home" asp-action="Detail" asp-route-id="@room.MaLoai" class="btn btn-dark rounded-3" style="background-color: #0D0D0F; color: #C8A96E; border-color: #0D0D0F;">
+                                                    Xem chi tiết & Đặt phòng
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

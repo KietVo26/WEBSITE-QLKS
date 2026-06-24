@@ -1,0 +1,195 @@
+﻿@model Dictionary<string, List<QuanLyKhachSan.Controllers.RoomMapItemViewModel>>
+@{
+    ViewData["Title"] = "Sơ đồ phòng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var regionIcons = new Dictionary<string, string>
+    {
+        { "Phan Thiết", "fa-umbrella-beach" },
+        { "Hà Nội", "fa-landmark" },
+        { "Hồ Chí Minh", "fa-city" },
+        { "Tây Ninh", "fa-mountain-sun" },
+        { "Đà Nẵng", "fa-water" }
+    };
+    var regionColors = new Dictionary<string, string>
+    {
+        { "Phan Thiết", "#0ea5e9" },
+        { "Hà Nội", "#ef4444" },
+        { "Hồ Chí Minh", "#8b5cf6" },
+        { "Tây Ninh", "#22c55e" },
+        { "Đà Nẵng", "#f59e0b" }
+    };
+}
+
+@section Styles {
+    <style>
+        @@keyframes pulse {
+            0%   { opacity: 1; transform: scale(1); }
+            50%  { opacity: 0.65; transform: scale(1.06); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        @@keyframes borderGlow {
+            0%   { box-shadow: 0 0 0px 0px rgba(245, 158, 11, 0.8); }
+            50%  { box-shadow: 0 0 16px 6px rgba(245, 158, 11, 0.9); }
+            100% { box-shadow: 0 0 0px 0px rgba(245, 158, 11, 0.8); }
+        }
+        .room-cho-nhan {
+            border: 2px solid #f59e0b !important;
+            animation: borderGlow 1.4s ease-in-out infinite;
+        }
+        .room-cho-nhan .fa-bell {
+            animation: pulse 1s ease-in-out infinite;
+        }
+        .room-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+    </style>
+}
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-bed text-primary me-2"></i> Sơ đồ phòng <small class="text-muted fs-6">(@ViewBag.TotalCount phòng)</small></h2>
+        <div class="d-flex gap-2 flex-wrap">
+            <span class="badge bg-success p-2 fs-6 shadow-sm"><i class="fa-solid fa-door-open"></i> Trống (@ViewBag.VacantCount)</span>
+            <span class="badge bg-danger p-2 fs-6 shadow-sm"><i class="fa-solid fa-user"></i> Đang ở (@ViewBag.OccupiedCount)</span>
+            <span class="badge bg-warning text-dark p-2 fs-6 shadow-sm"><i class="fa-solid fa-broom"></i> Đang dọn (@ViewBag.CleaningCount)</span>
+        </div>
+    </div>
+</div>
+
+<div class="d-grid gap-5">
+    @foreach (var region in Model)
+    {
+        var icon = regionIcons.ContainsKey(region.Key) ? regionIcons[region.Key] : "fa-map-marker-alt";
+        var color = regionColors.ContainsKey(region.Key) ? regionColors[region.Key] : "#64748b";
+        var totalRegion = region.Value.Count;
+        var vacantRegion = region.Value.Count(x => x.Room.TrangThai == "Trống");
+
+        <div class="mb-2">
+            <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                <i class="fa-solid @icon fs-4" style="color: @color"></i>
+                <h4 class="fw-bold m-0">@region.Key</h4>
+                <span class="badge bg-light text-dark border ms-2">@totalRegion phòng</span>
+                <span class="badge bg-success-subtle text-success">@vacantRegion trống</span>
+            </div>
+            
+            <div class="row g-3">
+                @foreach (var item in region.Value)
+                {
+                    var isPendingCheckin = item.Room.TrangThai == "Trống" && item.PendingCheckInBooking != null;
+                    
+                    var statusClass = "";
+                    var bgBadge = "bg-success";
+                    var textIcon = "fa-door-open";
+                    
+                    if (isPendingCheckin)
+                    {
+                        statusClass = "room-cho-nhan";
+                        bgBadge = "bg-warning text-dark";
+                        textIcon = "fa-bell";
+                    }
+                    else if (item.Room.TrangThai == "Đang ở")
+                    {
+                        bgBadge = "bg-danger";
+                        textIcon = "fa-user";
+                    }
+                    else if (item.Room.TrangThai == "Đang dọn dẹp")
+                    {
+                        bgBadge = "bg-warning text-dark";
+                        textIcon = "fa-broom";
+                    }
+
+                    <div class="col-md-3">
+                        <div class="card h-100 border @statusClass room-card shadow-sm rounded-3">
+                            <div class="card-body p-3 d-flex flex-column justify-content-between">
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h4 class="fw-bold m-0 text-dark">@item.Room.MaPhong</h4>
+                                        <span class="badge @bgBadge rounded-2">
+                                            <i class="fa-solid @textIcon me-1"></i>
+                                            @(isPendingCheckin ? "Chờ nhận" : item.Room.TrangThai)
+                                        </span>
+                                    </div>
+                                    <small class="text-muted d-block mb-1">@item.Room.LoaiPhong.TenLoai</small>
+                                    <small class="text-primary fw-bold">@item.Room.LoaiPhong.GiaPhong.ToString("N0") đ/đêm</small>
+                                    
+                                    @if (item.Room.TrangThai == "Đang ở" && item.CurrentBooking != null)
+                                    {
+                                        <div class="mt-3 p-2 bg-light rounded-2 border">
+                                            <div class="small fw-bold text-dark"><i class="fa-solid fa-circle-user text-muted me-1"></i>@item.CurrentBooking.KhachHang.HoTen</div>
+                                            <div class="small text-muted mt-1">Check-out: @(item.CurrentBooking.NgayCheckOut?.ToString("dd/MM HH:mm") ?? "—")</div>
+                                        </div>
+                                    }
+                                    else if (isPendingCheckin && item.PendingCheckInBooking != null)
+                                    {
+                                        <div class="mt-3 p-2 bg-warning-subtle rounded-2 border border-warning">
+                                            <div class="small fw-bold text-dark"><i class="fa-solid fa-bell-concierge text-muted me-1"></i>@item.PendingCheckInBooking.KhachHang.HoTen</div>
+                                            <div class="small text-dark mt-1">Từ: @item.PendingCheckInBooking.NgayCheckIn.ToString("dd/MM HH:mm")</div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="mt-4">
+                                    @if (isPendingCheckin)
+                                    {
+                                        <a asp-controller="Admin" asp-action="CheckinRoom" asp-route-id="@item.Room.MaPhong" class="btn btn-warning w-100 btn-sm fw-bold">
+                                            🔑 Nhận phòng (Check-in)
+                                        </a>
+                                    }
+                                    else if (item.Room.TrangThai == "Đang ở" && item.CurrentBooking != null)
+                                    {
+                                        <div class="d-flex gap-1">
+                                            <a asp-controller="Admin" asp-action="AddService" asp-route-bookingId="@item.CurrentBooking.MaDP" class="btn btn-outline-primary btn-sm flex-fill">
+                                                🛎️ + DV
+                                            </a>
+                                            <a asp-controller="Admin" asp-action="Checkout" asp-route-bookingId="@item.CurrentBooking.MaDP" class="btn btn-danger btn-sm flex-fill fw-bold">
+                                                💳 Check-out
+                                            </a>
+                                        </div>
+                                    }
+                                    else if (item.Room.TrangThai == "Đang dọn dẹp")
+                                    {
+                                        <a asp-controller="Admin" asp-action="UpdateRoomStatus" asp-route-id="@item.Room.MaPhong" asp-route-status="Trống" class="btn btn-success w-100 btn-sm">
+                                            ✓ Hoàn tất dọn dẹp
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex gap-1">
+                                            <a asp-controller="Booking" asp-action="Create" asp-route-room="@item.Room.MaPhong" class="btn btn-outline-dark btn-sm flex-fill">
+                                                📅 Đặt phòng
+                                            </a>
+                                            <a asp-controller="Admin" asp-action="UpdateRoomStatus" asp-route-id="@item.Room.MaPhong" asp-route-status="Đang dọn dẹp" class="btn btn-outline-warning btn-sm flex-fill" title="Chuyển sang dọn dẹp">
+                                                🧹 Dọn dẹp
+                                            </a>
+                                        </div>
+                                    }
+
+                                    <!-- DROPDOWN OPTIONS -->
+                                    <div class="dropdown mt-2 text-center">
+                                        <button class="btn btn-link btn-sm text-decoration-none dropdown-toggle text-muted py-0" type="button" data-bs-toggle="dropdown">
+                                            Tác vụ khác
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 small">
+                                            <li><a class="dropdown-item" asp-controller="Admin" asp-action="UpdateRoomStatus" asp-route-id="@item.Room.MaPhong" asp-route-status="Trống"><i class="fa-solid fa-rotate-left me-2"></i>Chuyển về Trống (Huỷ)</a></li>
+                                            <li><a class="dropdown-item" asp-controller="Admin" asp-action="UpdateRoomStatus" asp-route-id="@item.Room.MaPhong" asp-route-status="Đang dọn dẹp"><i class="fa-solid fa-broom me-2"></i>Chuyển sang Dọn Dẹp</a></li>
+                                            @if (item.Room.TrangThai == "Trống")
+                                            {
+                                                <li><a class="dropdown-item" asp-controller="Booking" asp-action="Create" asp-route-room="@item.Room.MaPhong"><i class="fa-solid fa-calendar-plus me-2"></i>Tạo đơn đặt quầy</a></li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

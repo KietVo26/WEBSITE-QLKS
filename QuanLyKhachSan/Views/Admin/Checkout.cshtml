@@ -1,0 +1,140 @@
+﻿@model QuanLyKhachSan.Models.DatPhong
+@{
+    ViewData["Title"] = "Thanh Toán & Trả Phòng " + Model.MaPhong;
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var usedServices = ViewBag.UsedServices as IEnumerable<QuanLyKhachSan.Models.SuDungDichVu> ?? new List<QuanLyKhachSan.Models.SuDungDichVu>();
+    int days = ViewBag.Days ?? 1;
+    decimal roomCharge = ViewBag.RoomCharge ?? 0;
+    decimal serviceCharge = ViewBag.ServiceCharge ?? 0;
+    decimal subTotal = ViewBag.SubTotal ?? 0;
+    decimal vipDiscount = ViewBag.VipDiscount ?? 0;
+    DateTime checkoutTime = ViewBag.CheckoutTime ?? DateTime.Now;
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-credit-card text-primary me-2"></i> Lập Hóa Đơn & Check-out</h2>
+        <p class="text-muted">Phòng: <strong>@Model.MaPhong</strong> | Khách hàng: <strong>@Model.KhachHang.HoTen</strong></p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- LEFT: BILL SUMMARY -->
+    <div class="col-md-7">
+        <div class="card p-4 border-0 shadow-sm mb-4">
+            <h4 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-list-check text-primary me-2"></i>Chi tiết tính tiền</h4>
+            
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <tbody>
+                        <tr>
+                            <td class="text-secondary fw-medium">Hạng phòng:</td>
+                            <td class="text-end fw-bold">@Model.Phong.LoaiPhong.TenLoai</td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary fw-medium">Ngày Check-in:</td>
+                            <td class="text-end">@Model.NgayCheckIn.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary fw-medium">Ngày Check-out thực tế:</td>
+                            <td class="text-end">@checkoutTime.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary fw-medium">Số ngày lưu trú:</td>
+                            <td class="text-end fw-bold">@days ngày</td>
+                        </tr>
+                        <tr class="border-top">
+                            <td class="text-secondary fw-medium">Tiền phòng (@days ngày x @Model.Phong.LoaiPhong.GiaPhong.ToString("N0") đ):</td>
+                            <td class="text-end fw-bold text-dark">@roomCharge.ToString("N0") đ</td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary fw-medium">Tiền dịch vụ đã dùng:</td>
+                            <td class="text-end fw-bold text-dark">@serviceCharge.ToString("N0") đ</td>
+                        </tr>
+                        <tr class="table-light">
+                            <td class="fw-bold text-dark fs-5">Tạm tính (Subtotal):</td>
+                            <td class="text-end fw-bold text-dark fs-5">@subTotal.ToString("N0") đ</td>
+                        </tr>
+                        @if (vipDiscount > 0)
+                        {
+                            <tr class="text-success">
+                                <td><i class="fa-solid fa-crown me-1"></i>Giảm giá VIP (10% cho lưu trú >= 2 ngày):</td>
+                                <td class="text-end fw-bold">- @vipDiscount.ToString("N0") đ</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SERVICES consumed -->
+        <div class="card p-4 border-0 shadow-sm">
+            <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-circle-info text-info me-2"></i>Bảng kê dịch vụ chi tiết</h5>
+            @if (!usedServices.Any())
+            {
+                <p class="text-muted small m-0">Không sử dụng dịch vụ phụ trợ.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle small">
+                        <thead>
+                            <tr>
+                                <th>Tên dịch vụ</th>
+                                <th>Đơn giá</th>
+                                <th>Số lượng</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var sd in usedServices)
+                            {
+                                <tr>
+                                    <td>@sd.DichVu.TenDV</td>
+                                    <td>@sd.DichVu.GiaDV.ToString("N0") đ</td>
+                                    <td>@sd.SoLuong</td>
+                                    <td class="text-end fw-bold">@sd.ThanhTien.ToString("N0") đ</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- RIGHT: CHECKOUT ACTION -->
+    <div class="col-md-5">
+        <div class="card p-4 border-0 shadow-sm text-dark h-100" style="background-color: #FAF8F3;">
+            <h4 class="fw-bold mb-4"><i class="fa-solid fa-cash-register text-gold me-2" style="color: #C8A96E;"></i>Xử lý thanh toán</h4>
+            
+            <form asp-controller="Admin" asp-action="ProcessCheckout" method="post">
+                <input type="hidden" name="bookingId" value="@Model.MaDP" />
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-secondary small text-uppercase">Áp dụng mã Voucher (nếu có)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-0"><i class="fa-solid fa-ticket text-warning"></i></span>
+                        <input type="text" name="voucherCode" class="form-control border-0 bg-white" placeholder="VD: LOYAL-12345" />
+                    </div>
+                    <small class="text-muted d-block mt-2">Voucher sẽ được kiểm tra tính hợp lệ và trừ trực tiếp vào hóa đơn cuối cùng.</small>
+                </div>
+
+                <div class="alert alert-info border-0 rounded-3 small">
+                    <i class="fa-solid fa-gift text-primary me-1"></i>
+                    <strong>Chương trình tri ân:</strong> Hệ thống sẽ tự động tặng 01 Voucher <strong>"Khách Hàng Thân Thiết 10%"</strong> cho khách hàng này sau khi hoàn tất thanh toán đơn hàng này (nếu đủ mỗi 2 lượt lưu trú hoàn thành).
+                </div>
+
+                <div class="border-top pt-4 mt-4">
+                    <button type="submit" class="btn btn-danger w-100 py-3 rounded-3 fw-bold fs-5 shadow-sm" onclick="return confirm('Bạn xác nhận khách hàng đã thanh toán đầy đủ và tiến hành trả phòng?');">
+                        <i class="fa-solid fa-check-double me-1"></i>Thanh toán & Trả phòng
+                    </button>
+                    <a asp-controller="Admin" asp-action="RoomMap" class="btn btn-outline-secondary w-100 mt-2 py-2 rounded-3">
+                        Quay lại sơ đồ
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
