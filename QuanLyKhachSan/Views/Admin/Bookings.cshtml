@@ -1,0 +1,200 @@
+@model IEnumerable<QuanLyKhachSan.Models.DatPhong>
+@{
+    ViewData["Title"] = "Quản lý Đặt phòng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var currentStatus = ViewBag.CurrentStatus as string ?? "all";
+
+    var statusBadges = new Dictionary<string, string>
+    {
+        { "Chờ xác nhận", "bg-warning text-dark" },
+        { "Đã xác nhận", "bg-info text-dark" },
+        { "Đang ở", "bg-danger" },
+        { "Đã thanh toán", "bg-success" },
+        { "Đã thanh toán (Online)", "bg-success-subtle text-success border border-success" },
+        { "Đã huỷ", "bg-secondary" }
+    };
+}
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h2 class="fw-bold m-0">
+            <i class="fa-solid fa-calendar-days text-primary me-2"></i> Danh sách Đặt phòng
+        </h2>
+        <a asp-controller="Booking" asp-action="Create" class="btn btn-primary fw-semibold shadow-sm">
+            <i class="fa-solid fa-plus me-1"></i> Tạo đặt phòng tại quầy
+        </a>
+    </div>
+</div>
+
+<!-- TABS FILTER -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-2 bg-light rounded-3">
+        <ul class="nav nav-pills gap-1 flex-wrap">
+            <li class="nav-item">
+                <a class="nav-link @(currentStatus == "all" ? "active bg-dark" : "text-dark")" 
+                   asp-controller="Admin" asp-action="Bookings" asp-route-status="all">
+                    Tất cả
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(currentStatus == "Chờ xác nhận" ? "active bg-warning text-dark" : "text-dark")" 
+                   asp-controller="Admin" asp-action="Bookings" asp-route-status="Chờ xác nhận">
+                    Chờ xác nhận 
+                    <span class="badge bg-danger ms-1">@Model.Count(x => x.TrangThai == "Chờ xác nhận")</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(currentStatus == "Đã xác nhận" ? "active bg-info text-dark" : "text-dark")" 
+                   asp-controller="Admin" asp-action="Bookings" asp-route-status="Đã xác nhận">
+                    Đã xác nhận
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(currentStatus == "Đang ở" ? "active bg-danger" : "text-dark")" 
+                   asp-controller="Admin" asp-action="Bookings" asp-route-status="Đang ở">
+                    Đang ở
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(currentStatus == "Đã thanh toán" ? "active bg-success" : "text-dark")" 
+                   asp-controller="Admin" asp-action="Bookings" asp-route-status="Đã thanh toán">
+                    Đã thanh toán
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link @(currentStatus == "Đã huỷ" ? "active bg-secondary" : "text-dark")" 
+                   asp-controller="Admin" asp-action="Bookings" asp-route-status="Đã huỷ">
+                    Đã huỷ
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- LIST TABLE -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-3" style="width: 80px;">Mã</th>
+                        <th>Khách hàng</th>
+                        <th>Phòng</th>
+                        <th>Thời gian</th>
+                        <th>Nguồn / Thanh toán</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-3" style="min-width: 200px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fa-regular fa-folder-open fs-2 mb-2 d-block"></i>
+                                Không có đơn đặt phòng nào phù hợp bộ lọc này.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var badgeClass = statusBadges.ContainsKey(item.TrangThai) ? statusBadges[item.TrangThai] : "bg-dark";
+                            var isCheckinToday = (item.TrangThai == "Đã xác nhận" || item.TrangThai == "Đã thanh toán (Online)" || item.TrangThai == "Chờ xác nhận") 
+                                                 && item.NgayCheckIn.Date <= DateTime.Today;
+
+                            <tr>
+                                <td class="ps-3 font-monospace fw-bold">#@item.MaDP</td>
+                                <td>
+                                    <div class="fw-semibold text-dark">@item.KhachHang.HoTen</div>
+                                    <div class="small text-muted"><i class="fa-solid fa-phone me-1"></i>@item.KhachHang.SDT</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">@item.MaPhong</div>
+                                    <div class="small text-muted">@item.Phong.LoaiPhong.TenLoai (@item.Phong.LoaiPhong.KhuVuc)</div>
+                                </td>
+                                <td>
+                                    <div class="small"><span class="text-success fw-medium">Vào:</span> @item.NgayCheckIn.ToString("dd/MM/yyyy HH:mm")</div>
+                                    <div class="small"><span class="text-danger fw-medium">Ra:</span> @(item.NgayCheckOut?.ToString("dd/MM/yyyy HH:mm") ?? "—")</div>
+                                </td>
+                                <td>
+                                    <div class="small text-dark fw-medium">@item.NguonDat</div>
+                                    <div class="small text-muted text-truncate" style="max-width: 200px;" title="@item.GhiChu">
+                                        @item.GhiChu
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge @badgeClass rounded-2 px-2 py-1.5">
+                                        @item.TrangThai
+                                    </span>
+                                </td>
+                                <td class="text-end pe-3">
+                                    <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                        @if (item.TrangThai == "Chờ xác nhận")
+                                        {
+                                            <a asp-controller="Admin" asp-action="ApproveBooking" asp-route-id="@item.MaDP" 
+                                               class="btn btn-success btn-sm fw-semibold shadow-sm" title="Duyệt / Xác nhận đặt phòng">
+                                                <i class="fa-solid fa-check me-1"></i> Duyệt
+                                            </a>
+                                            <a asp-controller="Admin" asp-action="CancelBooking" asp-route-id="@item.MaDP" 
+                                               class="btn btn-outline-danger btn-sm fw-semibold" 
+                                               onclick="return confirm('Bạn có chắc chắn muốn huỷ đơn đặt phòng này?')" title="Huỷ đơn">
+                                                <i class="fa-solid fa-xmark"></i> Huỷ
+                                            </a>
+                                        }
+
+                                        @if (isCheckinToday && item.Phong.TrangThai == "Trống")
+                                        {
+                                            <a asp-controller="Admin" asp-action="CheckinRoom" asp-route-id="@item.MaPhong" 
+                                               class="btn btn-warning btn-sm fw-bold shadow-sm" title="Làm thủ tục nhận phòng">
+                                                🔑 Check-in
+                                            </a>
+                                        }
+                                        else if (isCheckinToday && item.Phong.TrangThai == "Đang dọn dẹp")
+                                        {
+                                            <span class="badge bg-warning-subtle text-warning border border-warning" title="Cần hoàn tất dọn dẹp trước">
+                                                🧹 Phòng đang dọn
+                                            </span>
+                                        }
+
+                                        @if (item.TrangThai == "Đang ở")
+                                        {
+                                            <a asp-controller="Admin" asp-action="AddService" asp-route-bookingId="@item.MaDP" 
+                                               class="btn btn-outline-primary btn-sm" title="Thêm dịch vụ sử dụng">
+                                                🛎️ +DV
+                                            </a>
+                                            <a asp-controller="Admin" asp-action="Checkout" asp-route-bookingId="@item.MaDP" 
+                                               class="btn btn-danger btn-sm fw-semibold" title="Thanh toán checkout">
+                                                💳 Checkout
+                                            </a>
+                                        }
+
+                                        @if (item.TrangThai == "Đã thanh toán")
+                                        {
+                                            <a asp-controller="Admin" asp-action="Checkout" asp-route-bookingId="@item.MaDP" 
+                                               class="btn btn-outline-secondary btn-sm" title="Xem lại hóa đơn">
+                                                📄 Hóa đơn
+                                            </a>
+                                        }
+                                        
+                                        @if (item.TrangThai == "Đã xác nhận" && !isCheckinToday)
+                                        {
+                                            <a asp-controller="Admin" asp-action="CancelBooking" asp-route-id="@item.MaDP" 
+                                               class="btn btn-outline-secondary btn-sm" 
+                                               onclick="return confirm('Bạn có chắc chắn muốn huỷ đơn đặt phòng này?')">
+                                                Huỷ phòng
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,4 +1,4 @@
-﻿@model IEnumerable<QuanLyKhachSan.Models.LoaiPhong>
+@model IEnumerable<QuanLyKhachSan.Models.LoaiPhong>
 @{
     ViewData["Title"] = "K-Hotel — Nghỉ Dưỡng Đẳng Cấp";
     var recommendations = ViewBag.Recommendations as IEnumerable<QuanLyKhachSan.Controllers.PhongViewModel> ?? new List<QuanLyKhachSan.Controllers.PhongViewModel>();
@@ -71,10 +71,8 @@
 <div class="container py-5 my-4">
     <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
         <div>
-            <h5 class="text-gold text-uppercase" style="color: #C8A96E; font-family: 'DM Sans', sans-serif;">GỢI Ý CỦA AI</h5>
             <h2 class="fw-bold font-serif m-0" style="font-family: 'Cormorant Garamond', serif;">Phòng Trống Gợi Ý Cho Bạn</h2>
         </div>
-        <span class="badge bg-dark p-2 text-gold" style="color: #C8A96E;"><i class="fa-solid fa-wand-magic-sparkles"></i> Hệ thống đề xuất cá nhân hóa</span>
     </div>
     
     <div class="row g-4">

@@ -1,4 +1,4 @@
-﻿@model QuanLyKhachSan.Models.LoaiPhong
+@model QuanLyKhachSan.Models.LoaiPhong
 @{
     ViewData["Title"] = Model.TenLoai;
     var reviews = ViewBag.Reviews as IEnumerable<QuanLyKhachSan.Models.DanhGia> ?? new List<QuanLyKhachSan.Models.DanhGia>();
@@ -134,8 +134,15 @@
                                         <input type="number" name="so_nguoi" class="form-control rounded-3 border-0 bg-white shadow-sm" min="1" max="@Model.SoNguoiToiDa" value="1" required />
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label fw-bold small text-muted">Mã Voucher (nếu có)</label>
-                                        <input type="text" name="voucher_code" class="form-control rounded-3 border-0 bg-white shadow-sm" placeholder="VD: LUCK10" />
+                                        <label class="form-label fw-bold small text-muted">Chọn Voucher giảm giá</label>
+                                        <select name="voucher_code" class="form-select rounded-3 border-0 bg-white shadow-sm">
+                                            <option value="">-- Không sử dụng --</option>
+                                            @foreach (var v in ViewBag.AvailableVouchers as IEnumerable<QuanLyKhachSan.Models.Voucher> ?? new List<QuanLyKhachSan.Models.Voucher>())
+                                            {
+                                                var discountValue = v.LoaiGiam == "phantram" ? $"{v.GiaTriGiam:N0}%" : $"{v.GiaTriGiam:N0} đ";
+                                                <option value="@v.Code">@v.TenVoucher (Giảm: @discountValue, Đơn >= @v.GiaTriToiThieu.ToString("N0")đ)</option>
+                                            }
+                                        </select>
                                     </div>
                                 </div>
 

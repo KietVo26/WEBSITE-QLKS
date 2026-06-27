@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Lập Phiếu Đặt Phòng";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     var customers = ViewBag.Customers as IEnumerable<QuanLyKhachSan.Models.KhachHang> ?? new List<QuanLyKhachSan.Models.KhachHang>();
@@ -89,7 +89,7 @@
                 <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-plus me-1 text-success"></i> Thêm Khách Hàng Nhanh</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form asp-controller="Booking" asp-action="AddCustomerQuick" method="post">
+            <form asp-controller="Booking" asp-action="AddCustomerQuick" method="post" onsubmit="return validateContactInfo();">
                 <input type="hidden" name="maphong" value="@selectedRoom" />
                 <div class="modal-body">
                     <div class="mb-3">
@@ -101,12 +101,13 @@
                         <input type="text" name="cccd" class="form-control" placeholder="VD: 079123456789" required />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Số Điện Thoại (*)</label>
-                        <input type="text" name="sdt" class="form-control" placeholder="VD: 0909123456" required />
+                        <label class="form-label">Số Điện Thoại</label>
+                        <input type="text" id="fastSdt" name="sdt" class="form-control" placeholder="VD: 0909123456" />
+                        <div class="form-text small text-muted">Nhập ít nhất Số điện thoại hoặc Email</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Email</label>
-                        <input type="email" name="email" class="form-control" placeholder="VD: khachhang@gmail.com" />
+                        <input type="email" id="fastEmail" name="email" class="form-control" placeholder="VD: khachhang@gmail.com" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -117,3 +118,17 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function validateContactInfo() {
+            var sdt = document.getElementById("fastSdt").value.trim();
+            var email = document.getElementById("fastEmail").value.trim();
+            if (sdt === "" && email === "") {
+                alert("Lỗi: Vui lòng cung cấp ít nhất Số điện thoại hoặc Email để liên hệ!");
+                return false;
+            }
+            return true;
+        }
+    </script>
+}

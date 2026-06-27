@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhachSan.Models;
 
@@ -87,6 +87,12 @@ namespace QuanLyKhachSan.Data
                 .WithMany()
                 .HasForeignKey(dg => dg.MaLoai)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DanhGia>()
+                .HasOne(dg => dg.DatPhong)
+                .WithMany()
+                .HasForeignKey(dg => dg.MaDP)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<HoaDon>()
                 .HasOne(hd => hd.DatPhong)

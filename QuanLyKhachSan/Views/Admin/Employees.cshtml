@@ -1,14 +1,23 @@
-﻿@model IEnumerable<QuanLyKhachSan.Models.NhanVien>
+@model IEnumerable<QuanLyKhachSan.Models.NhanVien>
 @{
     ViewData["Title"] = "Quản Lý Nhân Viên";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var isAdmin = User.IsInRole("admin");
 }
 
-<div class="row mb-4">
-    <div class="col-12">
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
         <h2 class="fw-bold m-0"><i class="fa-solid fa-user-tie text-primary me-2"></i> Danh Sách Nhân Viên</h2>
-        <p class="text-muted">Quản lý chức vụ, lương bổng và thông tin liên hệ của nhân sự khách sạn.</p>
+        <p class="text-muted mb-0">Quản lý chức vụ, lương bổng và thông tin liên hệ của nhân sự khách sạn.</p>
     </div>
+    @if (isAdmin)
+    {
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <button class="btn btn-success fw-bold rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                <i class="fa-solid fa-user-plus me-1"></i> Thêm Nhân Viên
+            </button>
+        </div>
+    }
 </div>
 
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
@@ -23,6 +32,10 @@
                     <th>Số Điện Thoại</th>
                     <th>Email</th>
                     <th>Ngày Vào Làm</th>
+                    @if (isAdmin)
+                    {
+                        <th class="text-end pe-4">Hành động</th>
+                    }
                 </tr>
             </thead>
             <tbody>
@@ -32,25 +45,185 @@
                         <td class="fw-bold ps-4">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:36px; height:36px; font-weight:bold;">
-                                    @nv.TaiKhoan.HoTen.Substring(0, 1).ToUpper()
+                                    @(string.IsNullOrEmpty(nv.TaiKhoan?.HoTen) ? "N" : nv.TaiKhoan.HoTen.Substring(0, 1).ToUpper())
                                 </div>
                                 <div>
-                                    <span class="text-dark d-block">@nv.TaiKhoan.HoTen</span>
-                                    <small class="text-muted">Username: @nv.TaiKhoan.TenDangNhap</small>
+                                    <span class="text-dark d-block">@(nv.TaiKhoan?.HoTen ?? "—")</span>
+                                    <small class="text-muted">Username: @(nv.TaiKhoan?.TenDangNhap ?? "—")</small>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-secondary">@nv.ChucVu</span>
+                            <span class="badge @(nv.ChucVu == "admin" ? "bg-danger" : "bg-secondary")">@nv.ChucVu</span>
                         </td>
                         <td>@nv.CaLamViec</td>
                         <td class="text-danger fw-bold">@nv.Luong.ToString("N0") đ</td>
                         <td>@(string.IsNullOrEmpty(nv.SDT) ? "—" : nv.SDT)</td>
                         <td>@(string.IsNullOrEmpty(nv.Email) ? "—" : nv.Email)</td>
                         <td class="text-muted">@(nv.NgayVaoLam.HasValue ? nv.NgayVaoLam.Value.ToString("dd/MM/yyyy") : "—")</td>
+                        @if (isAdmin)
+                        {
+                            <td class="text-end pe-4">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button class="btn btn-sm btn-outline-primary rounded-3" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editEmployeeModal"
+                                            onclick="populateEditModal('@nv.MaNV', '@(nv.TaiKhoan?.HoTen ?? "")', '@nv.ChucVu', '@((int)nv.Luong)', '@nv.CaLamViec', '@(nv.SDT ?? "")', '@(nv.Email ?? "")')">
+                                        <i class="fa-solid fa-pen-to-square me-1"></i>Sửa
+                                    </button>
+                                    <form asp-controller="Admin" asp-action="DeleteEmployee" asp-route-id="@nv.MaNV" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa nhân viên @(nv.TaiKhoan?.HoTen) và tài khoản đi kèm không?');" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-3">
+                                            <i class="fa-solid fa-trash me-1"></i>Xóa
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        }
                     </tr>
                 }
             </tbody>
         </table>
     </div>
 </div>
+
+@if (isAdmin)
+{
+    <!-- ADD EMPLOYEE MODAL -->
+    <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-plus me-2"></i> Thêm Nhân Viên Mới</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-controller="Admin" asp-action="AddEmployee" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tên đăng nhập (*)</label>
+                                <input type="text" name="username" class="form-control rounded-3" placeholder="VD: nv_kiet" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Mật khẩu (*)</label>
+                                <input type="password" name="password" class="form-control rounded-3" required />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Họ và Tên (*)</label>
+                            <input type="text" name="hoten" class="form-control rounded-3" placeholder="Nguyễn Văn B" required />
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Vai trò / Chức vụ</label>
+                                <select name="role" class="form-select rounded-3">
+                                    <option value="nhanvien" selected>Nhân Viên (nhanvien)</option>
+                                    <option value="admin">Quản trị viên (admin)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Ca Làm Việc mặc định</label>
+                                <select name="shift" class="form-select rounded-3">
+                                    <option value="Ca Sáng" selected>Ca Sáng</option>
+                                    <option value="Ca Chiều">Ca Chiều</option>
+                                    <option value="Ca Tối">Ca Tối</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Lương Cơ Bản (VND) (*)</label>
+                            <input type="number" name="salary" class="form-control rounded-3" value="5000000" min="0" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Số Điện Thoại</label>
+                            <input type="text" name="sdt" class="form-control rounded-3" placeholder="0909123456" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="email" name="email" class="form-control rounded-3" placeholder="email@khotel.com" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Hủy bỏ</button>
+                        <button type="submit" class="btn btn-success rounded-3"><i class="fa-solid fa-save me-1"></i>Lưu nhân viên</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT EMPLOYEE MODAL -->
+    <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-edit me-2"></i> Chỉnh Sửa Nhân Viên</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-controller="Admin" asp-action="EditEmployee" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="editId" name="id" />
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Họ và Tên (*)</label>
+                            <input type="text" id="editHoTen" name="hoten" class="form-control rounded-3" required />
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Vai trò / Chức vụ</label>
+                                <select id="editRole" name="role" class="form-select rounded-3">
+                                    <option value="nhanvien">Nhân Viên (nhanvien)</option>
+                                    <option value="admin">Quản trị viên (admin)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Ca Làm Việc mặc định</label>
+                                <select id="editShift" name="shift" class="form-select rounded-3">
+                                    <option value="Ca Sáng">Ca Sáng</option>
+                                    <option value="Ca Chiều">Ca Chiều</option>
+                                    <option value="Ca Tối">Ca Tối</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Lương Cơ Bản (VND) (*)</label>
+                            <input type="number" id="editSalary" name="salary" class="form-control rounded-3" min="0" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Số Điện Thoại</label>
+                            <input type="text" id="editSdt" name="sdt" class="form-control rounded-3" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="email" id="editEmail" name="email" class="form-control rounded-3" />
+                        </div>
+                        <div class="mb-3 border-top pt-3">
+                            <label class="form-label fw-semibold text-danger"><i class="fa-solid fa-key me-1"></i>Đổi mật khẩu tài khoản (Bỏ trống nếu giữ nguyên)</label>
+                            <input type="password" id="editPassword" name="password" class="form-control rounded-3" placeholder="Nhập mật khẩu mới" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Hủy bỏ</button>
+                        <button type="submit" class="btn btn-primary rounded-3"><i class="fa-solid fa-save me-1"></i>Cập nhật</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            function populateEditModal(id, hoten, role, salary, shift, sdt, email) {
+                document.getElementById("editId").value = id;
+                document.getElementById("editHoTen").value = hoten;
+                document.getElementById("editRole").value = role;
+                document.getElementById("editSalary").value = salary;
+                document.getElementById("editShift").value = shift;
+                document.getElementById("editSdt").value = sdt;
+                document.getElementById("editEmail").value = email;
+                document.getElementById("editPassword").value = "";
+            }
+        </script>
+    }
+}

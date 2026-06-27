@@ -1,13 +1,18 @@
-﻿@model IEnumerable<QuanLyKhachSan.Models.KhachHang>
+@model IEnumerable<QuanLyKhachSan.Models.KhachHang>
 @{
     ViewData["Title"] = "Quản Lý Khách Hàng";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="row mb-4">
-    <div class="col-12">
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
         <h2 class="fw-bold m-0"><i class="fa-solid fa-users text-primary me-2"></i> Danh Sách Khách Hàng</h2>
-        <p class="text-muted">Thông tin thành viên khách sạn, số căn cước, thứ hạng và điểm tích lũy.</p>
+        <p class="text-muted mb-0">Thông tin thành viên khách sạn, số căn cước, thứ hạng và điểm tích lũy.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <button class="btn btn-success fw-bold rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+            <i class="fa-solid fa-user-plus me-1"></i> Thêm Khách Hàng
+        </button>
     </div>
 </div>
 
@@ -23,14 +28,37 @@
                     <th>Email</th>
                     <th>Hạng Thành Viên</th>
                     <th>Điểm Tích Lũy</th>
+                    <th class="text-end pe-4">Hành động</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var kh in Model)
                 {
                     var rankBadge = "bg-secondary";
-                    if (kh.HangThanhVien == "Vàng") rankBadge = "bg-warning text-dark";
-                    else if (kh.HangThanhVien == "Bạc") rankBadge = "bg-light text-dark border";
+                    var rankEmoji = "🥉";
+                    switch (kh.HangThanhVien)
+                    {
+                        case "Vàng":
+                            rankBadge = "bg-warning text-dark";
+                            rankEmoji = "🥇";
+                            break;
+                        case "Bạch Kim":
+                            rankBadge = "bg-info text-dark";
+                            rankEmoji = "💎";
+                            break;
+                        case "Kim Cương":
+                            rankBadge = "bg-primary";
+                            rankEmoji = "💎✨";
+                            break;
+                        case "VIP":
+                            rankBadge = "bg-danger";
+                            rankEmoji = "👑";
+                            break;
+                        case "Legend":
+                            rankBadge = "bg-dark text-gold";
+                            rankEmoji = "🏆";
+                            break;
+                    }
 
                     <tr>
                         <td class="ps-4 fw-bold text-muted">#@kh.MaKH</td>
@@ -40,13 +68,155 @@
                         <td>@(string.IsNullOrEmpty(kh.Email) ? "—" : kh.Email)</td>
                         <td>
                             <span class="badge @rankBadge px-2 py-1 rounded-2">
-                                <i class="fa-solid fa-medal me-1"></i>@kh.HangThanhVien
+                                @rankEmoji @kh.HangThanhVien
                             </span>
                         </td>
                         <td class="fw-bold text-primary">@kh.DiemTichLuy đ</td>
+                        <td class="text-end pe-4">
+                            <div class="d-flex justify-content-end gap-2">
+                                <button class="btn btn-sm btn-outline-primary rounded-3" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editCustomerModal"
+                                        onclick="populateEditModal('@kh.MaKH', '@kh.HoTen', '@kh.CCCD', '@kh.SDT', '@(kh.Email ?? "")', '@kh.HangThanhVien', '@kh.DiemTichLuy')">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i>Sửa
+                                </button>
+                                @if (User.IsInRole("admin"))
+                                {
+                                    <form asp-controller="Admin" asp-action="DeleteCustomer" asp-route-id="@kh.MaKH" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa khách hàng @kh.HoTen không? Hành động này không thể hoàn tác!');" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-3">
+                                            <i class="fa-solid fa-trash me-1"></i>Xóa
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
 </div>
+
+<!-- ADD CUSTOMER MODAL -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-plus me-2"></i> Thêm Khách Hàng Mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Admin" asp-action="AddCustomer" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Họ và Tên (*)</label>
+                        <input type="text" name="hoten" class="form-control rounded-3" placeholder="Nguyễn Văn A" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số CCCD (*)</label>
+                        <input type="text" name="cccd" class="form-control rounded-3" placeholder="079123456789" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số Điện Thoại (*)</label>
+                        <input type="text" name="sdt" class="form-control rounded-3" placeholder="0909123456" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" name="email" class="form-control rounded-3" placeholder="email@gmail.com" />
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Hạng Thành Viên</label>
+                            <select name="rank" class="form-select rounded-3">
+                                <option value="Đồng" selected>Đồng</option>
+                                <option value="Vàng">Vàng</option>
+                                <option value="Bạch Kim">Bạch Kim</option>
+                                <option value="Kim Cương">Kim Cương</option>
+                                <option value="VIP">VIP</option>
+                                <option value="Legend">Legend</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Điểm Tích Lũy</label>
+                            <input type="number" name="points" class="form-control rounded-3" value="0" min="0" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-success rounded-3"><i class="fa-solid fa-save me-1"></i>Lưu lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT CUSTOMER MODAL -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-edit me-2"></i> Chỉnh Sửa Thông Tin Khách Hàng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Admin" asp-action="EditCustomer" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="editId" name="id" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Họ và Tên (*)</label>
+                        <input type="text" id="editHoTen" name="hoten" class="form-control rounded-3" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số CCCD (*)</label>
+                        <input type="text" id="editCccd" name="cccd" class="form-control rounded-3" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số Điện Thoại (*)</label>
+                        <input type="text" id="editSdt" name="sdt" class="form-control rounded-3" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" id="editEmail" name="email" class="form-control rounded-3" />
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Hạng Thành Viên</label>
+                            <select id="editRank" name="rank" class="form-select rounded-3">
+                                <option value="Đồng">Đồng</option>
+                                <option value="Vàng">Vàng</option>
+                                <option value="Bạch Kim">Bạch Kim</option>
+                                <option value="Kim Cương">Kim Cương</option>
+                                <option value="VIP">VIP</option>
+                                <option value="Legend">Legend</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Điểm Tích Lũy</label>
+                            <input type="number" id="editPoints" name="points" class="form-control rounded-3" min="0" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Hủy bỏ</button>
+                    <button type="submit" class="btn btn-primary rounded-3"><i class="fa-solid fa-save me-1"></i>Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function populateEditModal(id, hoten, cccd, sdt, email, rank, points) {
+            document.getElementById("editId").value = id;
+            document.getElementById("editHoTen").value = hoten;
+            document.getElementById("editCccd").value = cccd;
+            document.getElementById("editSdt").value = sdt;
+            document.getElementById("editEmail").value = email;
+            document.getElementById("editRank").value = rank;
+            document.getElementById("editPoints").value = points;
+        }
+    </script>
+}

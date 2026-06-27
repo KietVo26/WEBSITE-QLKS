@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -272,6 +272,26 @@ namespace QuanLyKhachSan.Controllers
             ViewBag.Reviews = reviews;
             ViewBag.AverageStars = Math.Round(avgStars, 1);
             ViewBag.VacantRooms = vacantRooms;
+
+            // Lấy danh sách voucher hợp lệ của khách hàng
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var vouchers = new List<Voucher>();
+            if (int.TryParse(userIdStr, out int userId))
+            {
+                var kh = await _context.KhachHangs.FirstOrDefaultAsync(k => k.MaTK == userId);
+                if (kh != null)
+                {
+                    var today = DateTime.Today;
+                    vouchers = await _context.Vouchers
+                        .Where(v => v.TrangThai == "active" && 
+                                    v.NgayHetHan >= today && 
+                                    v.SoLanDaDung < v.GioiHanDung &&
+                                    (v.MaKH == null || v.MaKH == kh.MaKH) &&
+                                    (v.KhuVucApDung == null || v.KhuVucApDung == roomType.KhuVuc))
+                        .ToListAsync();
+                }
+            }
+            ViewBag.AvailableVouchers = vouchers;
 
             return View(roomType);
         }

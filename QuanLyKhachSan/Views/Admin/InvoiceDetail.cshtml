@@ -1,0 +1,229 @@
+@model QuanLyKhachSan.Models.HoaDon
+@{
+    ViewData["Title"] = "Hóa Đơn Thanh Toán #" + Model.MaHD;
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var usedServices = ViewBag.UsedServices as IEnumerable<QuanLyKhachSan.Models.SuDungDichVu> ?? new List<QuanLyKhachSan.Models.SuDungDichVu>();
+    int days = ViewBag.Days ?? 1;
+}
+
+<div class="row mb-4 no-print">
+    <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-file-invoice-dollar text-primary me-2"></i> Chi tiết Hóa Đơn</h2>
+        <div class="d-flex gap-2">
+            @if (Model.DatPhong?.KhachHang?.Email != null && !Model.DatPhong.KhachHang.Email.Contains("Chưa cập nhật") && Model.DatPhong.KhachHang.Email.Contains("@"))
+            {
+                <a asp-controller="Admin" asp-action="SendInvoiceEmail" asp-route-id="@Model.MaHD" class="btn btn-success fw-bold shadow-sm">
+                    <i class="fa-solid fa-envelope me-1"></i> Gửi Email hóa đơn
+                </a>
+            }
+            else
+            {
+                <button type="button" class="btn btn-secondary fw-bold shadow-sm" disabled title="Khách hàng chưa đăng ký Email">
+                    <i class="fa-solid fa-envelope-slash me-1"></i> Gửi Email hóa đơn
+                </button>
+            }
+            <button onclick="window.print();" class="btn btn-primary fw-bold shadow-sm">
+                <i class="fa-solid fa-print me-1"></i> In hóa đơn (Print)
+            </button>
+            <a asp-controller="Admin" asp-action="Invoices" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-list me-1"></i> Danh sách hóa đơn
+            </a>
+            <a asp-controller="Admin" asp-action="RoomMap" class="btn btn-dark">
+                Sơ đồ phòng
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- PRINT AREA -->
+<div class="card border shadow-sm rounded-4 invoice-print-area overflow-hidden mx-auto" style="max-width: 850px; background-color: #fff;">
+    <!-- Invoice Header -->
+    <div class="p-5 text-white" style="background: linear-gradient(135deg, #0d0d0f 0%, #1e1e24 100%);">
+        <div class="row">
+            <div class="col-6">
+                <h2 class="fw-bold m-0 text-gold" style="color: #C8A96E; font-family: 'Playfair Display', serif; letter-spacing: 1px;">✦ K-HOTEL</h2>
+                <p class="small text-muted mb-0 mt-1">Dịch vụ lưu trú cao cấp hàng đầu</p>
+                <p class="small text-muted mb-0">Địa chỉ: Khu du lịch quốc tế, Việt Nam</p>
+                <p class="small text-muted mb-0">SĐT: (+84) 123 456 789 | Email: contact@khotel.com</p>
+            </div>
+            <div class="col-6 text-end">
+                <h1 class="display-6 fw-bold m-0 text-uppercase text-gold" style="color: #C8A96E;">HÓA ĐƠN</h1>
+                <p class="lead mb-2 text-white-50">Số HD: #@Model.MaHD</p>
+                <span class="badge bg-success rounded-2 px-3 py-2 small">ĐÃ THANH TOÁN</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Details Info -->
+    <div class="card-body p-5">
+        <div class="row mb-5 border-bottom pb-4">
+            <div class="col-6">
+                <h5 class="fw-bold text-secondary mb-3 small text-uppercase">Khách hàng thanh toán</h5>
+                <h4 class="fw-bold text-dark mb-1">@Model.DatPhong.KhachHang.HoTen</h4>
+                <p class="text-muted small mb-1"><i class="fa-solid fa-id-card me-1 text-muted" style="width: 16px;"></i>CCCD: @Model.DatPhong.KhachHang.CCCD</p>
+                <p class="text-muted small mb-1"><i class="fa-solid fa-phone me-1 text-muted" style="width: 16px;"></i>SĐT: @Model.DatPhong.KhachHang.SDT</p>
+                <p class="text-muted small mb-0"><i class="fa-solid fa-envelope me-1 text-muted" style="width: 16px;"></i>Email: @(Model.DatPhong.KhachHang.Email ?? "—")</p>
+            </div>
+            <div class="col-6 text-end">
+                <h5 class="fw-bold text-secondary mb-3 small text-uppercase">Thông tin giao dịch</h5>
+                <p class="text-dark mb-1"><strong>Mã Đặt Phòng:</strong> #@Model.MaDP</p>
+                <p class="text-dark mb-1"><strong>Ngày Lập HD:</strong> @Model.NgayLanhToan.ToString("dd/MM/yyyy HH:mm")</p>
+                <p class="text-dark mb-1"><strong>Nhân Viên Lập:</strong> @(Model.NhanVien?.TaiKhoan?.HoTen ?? "Hệ thống (Auto)")</p>
+                <p class="text-dark mb-0"><strong>Phương thức:</strong> @(Model.DatPhong.GhiChu?.Contains("Online") == true ? "Thanh toán Online" : "Tiền mặt tại quầy")</p>
+            </div>
+        </div>
+
+        <!-- Room Charge Table -->
+        <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-bed text-primary me-2"></i>Chi phí phòng nghỉ</h5>
+        <div class="table-responsive mb-4">
+            <table class="table align-middle border-bottom">
+                <thead class="table-light">
+                    <tr>
+                        <th>Thông tin phòng</th>
+                        <th>Thời gian lưu trú</th>
+                        <th class="text-center">Số đêm</th>
+                        <th class="text-end">Đơn giá/Đêm</th>
+                        <th class="text-end">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="fw-bold">Phòng @Model.DatPhong.MaPhong</div>
+                            <small class="text-muted">Hạng: @Model.DatPhong.Phong.LoaiPhong.TenLoai (@Model.DatPhong.Phong.LoaiPhong.KhuVuc)</small>
+                        </td>
+                        <td class="small">
+                            <div>Nhận: @Model.DatPhong.NgayCheckIn.ToString("dd/MM/yyyy HH:mm")</div>
+                            <div>Trả: @(Model.DatPhong.NgayCheckOut?.ToString("dd/MM/yyyy HH:mm") ?? "—")</div>
+                        </td>
+                        <td class="text-center">@days</td>
+                        <td class="text-end">@Model.DatPhong.Phong.LoaiPhong.GiaPhong.ToString("N0") đ</td>
+                        <td class="text-end fw-bold">@Model.TienPhong.ToString("N0") đ</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Services consumed Table -->
+        <h5 class="fw-bold mb-3 text-dark mt-4"><i class="fa-solid fa-bell-concierge text-primary me-2"></i>Dịch vụ phụ trợ đã sử dụng</h5>
+        <div class="table-responsive mb-5 border-bottom">
+            <table class="table table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-2">Tên dịch vụ</th>
+                        <th class="text-end">Đơn giá</th>
+                        <th class="text-center">Số lượng</th>
+                        <th class="text-end pe-2">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!usedServices.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-muted text-center py-3 small">Không sử dụng dịch vụ phụ trợ.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var sd in usedServices)
+                        {
+                            <tr>
+                                <td class="ps-2 fw-medium">@sd.DichVu.TenDV</td>
+                                <td class="text-end">@sd.DichVu.GiaDV.ToString("N0") đ</td>
+                                <td class="text-center">@sd.SoLuong</td>
+                                <td class="text-end fw-bold pe-2">@sd.ThanhTien.ToString("N0") đ</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary section -->
+        <div class="row justify-content-end">
+            <div class="col-md-5">
+                <table class="table table-borderless align-middle small mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="text-secondary fw-medium">Tiền phòng:</td>
+                            <td class="text-end fw-bold text-dark">@Model.TienPhong.ToString("N0") đ</td>
+                        </tr>
+                        <tr>
+                            <td class="text-secondary fw-medium">Tiền dịch vụ:</td>
+                            <td class="text-end fw-bold text-dark">@Model.TienDichVu.ToString("N0") đ</td>
+                        </tr>
+                        @if (Model.GiamGiaThanhVien > 0)
+                        {
+                            <tr class="text-success">
+                                <td><i class="fa-solid fa-tags me-1"></i>Tổng tiền giảm giá:</td>
+                                <td class="text-end fw-bold">- @Model.GiamGiaThanhVien.ToString("N0") đ</td>
+                            </tr>
+                        }
+                        <tr class="border-top" style="border-top-width: 2px !important;">
+                            <td class="fw-bold text-dark fs-5 py-3">Tổng cộng:</td>
+                            <td class="text-end fw-bold text-danger fs-4 py-3">@Model.TongTien.ToString("N0") đ</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footnote / Thank you -->
+        <div class="text-center mt-5 pt-5 border-top border-dashed">
+            <h5 class="font-serif italic" style="font-family: 'Playfair Display', serif;">✦ Cảm ơn quý khách đã lưu trú tại K-Hotel! ✦</h5>
+            <p class="text-muted small mb-0">Hóa đơn đã được gửi tự động tới email đăng ký của quý khách.</p>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .text-gold {
+            color: #C8A96E !important;
+        }
+        .border-dashed {
+            border-top: 1px dashed var(--bs-border-color) !important;
+        }
+        
+        @@media print {
+            /* Ẩn sidebar, header của Admin layout */
+            body {
+                background-color: #fff !important;
+                color: #000 !important;
+            }
+            .sidebar, .topbar, .no-print, .alert {
+                display: none !important;
+            }
+            .main {
+                margin-left: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            .content {
+                padding: 0 !important;
+            }
+            .invoice-print-area {
+                border: none !important;
+                box-shadow: none !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            /* Phục hồi màu nền in ấn */
+            .table-light {
+                background-color: #f8f9fa !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .bg-light {
+                background-color: #f8f9fa !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .card-body, .p-5 {
+                padding: 20px !important;
+            }
+        }
+    </style>
+}

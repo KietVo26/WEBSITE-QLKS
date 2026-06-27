@@ -1,12 +1,110 @@
-﻿@model IEnumerable<QuanLyKhachSan.Models.DatPhong>
+@model IEnumerable<QuanLyKhachSan.Models.DatPhong>
 @{
     ViewData["Title"] = "Lịch sử đặt phòng";
+    var reviews = ViewBag.Reviews as Dictionary<int, QuanLyKhachSan.Models.DanhGia> ?? new Dictionary<int, QuanLyKhachSan.Models.DanhGia>();
 }
 
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <h2 class="fw-bold font-serif m-0" style="font-family: 'Cormorant Garamond', serif;"><i class="fa-solid fa-clock-rotate-left text-gold me-2" style="color: #C8A96E;"></i> Lịch sử đặt phòng của bạn</h2>
         <a asp-controller="Home" asp-action="Search" class="btn btn-dark rounded-3" style="background-color: #0D0D0F; color: #C8A96E; border-color: #0D0D0F;"><i class="fa-solid fa-plus me-1"></i>Đặt thêm phòng mới</a>
+    </div>
+
+    <!-- K-HOTEL REWARDS & VOUCHERS DASHBOARD -->
+    @{
+        var points = ViewBag.CustomerPoints ?? 0;
+        var tier = ViewBag.CustomerTier as string ?? "Đồng";
+        var vouchersList = ViewBag.Vouchers as IEnumerable<QuanLyKhachSan.Models.Voucher> ?? new List<QuanLyKhachSan.Models.Voucher>();
+        
+        var tierIcon = "🥉";
+        switch(tier)
+        {
+            case "Vàng":
+                tierIcon = "🥇";
+                break;
+            case "Bạch Kim":
+                tierIcon = "💎";
+                break;
+            case "Kim Cương":
+                tierIcon = "💎✨";
+                break;
+            case "VIP":
+                tierIcon = "👑";
+                break;
+            case "Legend":
+                tierIcon = "✦🏆✦";
+                break;
+        }
+    }
+
+    <div class="row g-4 mb-5">
+        <!-- LOYALTY CARD -->
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100" style="background: linear-gradient(135deg, #1e1e24 0%, #0d0d0f 100%); color: #fff;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="small fw-bold text-uppercase tracking-wider text-white-50">Thẻ Thành Viên K-Hotel</span>
+                    <span class="fs-4">✦</span>
+                </div>
+                <div class="d-flex align-items-center gap-3 my-3">
+                    <div class="fs-1">@tierIcon</div>
+                    <div>
+                        <h5 class="m-0 text-white-50 small">Hạng thành viên</h5>
+                        <h3 class="fw-bold m-0 text-gold" style="color: #C8A96E;">@tier</h3>
+                    </div>
+                </div>
+                <div class="border-top border-secondary pt-3 mt-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="m-0 text-white-50 small">Điểm tích lũy</h6>
+                        <h4 class="fw-bold m-0 text-info">@points đ</h4>
+                    </div>
+                    <div class="text-end text-white-50 small">
+                        Cứ 1 triệu thanh toán = 1 đ
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MY VOUCHERS CARD -->
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100" style="background-color: #FAF8F3;">
+                <h5 class="fw-bold mb-3 font-serif" style="font-family: 'Cormorant Garamond', serif;"><i class="fa-solid fa-ticket text-gold me-2" style="color: #C8A96E;"></i> Kho Voucher của bạn (@vouchersList.Count())</h5>
+                
+                @if(!vouchersList.Any())
+                {
+                    <div class="text-center py-4">
+                        <i class="fa-solid fa-ticket-simple fs-2 text-muted mb-2"></i>
+                        <p class="text-muted small m-0">Hiện tại bạn chưa có Voucher khả dụng nào.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-row gap-3 overflow-x-auto pb-2" style="scrollbar-width: thin;">
+                        @foreach(var v in vouchersList)
+                        {
+                            var discountVal = v.LoaiGiam == "phantram" ? $"{v.GiaTriGiam:N0}%" : $"{v.GiaTriGiam:N0}đ";
+                            <div class="card border-0 shadow-sm rounded-3 p-3 flex-shrink-0 bg-white" style="width: 240px; border-left: 5px solid #C8A96E !important;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-light text-dark border font-monospace">@v.Code</span>
+                                    <span class="badge bg-danger rounded-pill" style="font-size: 10px;">Giảm @discountVal</span>
+                                </div>
+                                <h6 class="fw-bold text-dark text-truncate m-0" title="@v.TenVoucher">@v.TenVoucher</h6>
+                                <div class="small text-muted mt-2" style="font-size: 11px;">
+                                    <div><i class="fa-solid fa-clock me-1"></i>Hạn: @v.NgayHetHan.ToString("dd/MM/yyyy")</div>
+                                    @if (!string.IsNullOrEmpty(v.KhuVucApDung))
+                                    {
+                                        <div><i class="fa-solid fa-map-location-dot me-1"></i>Khu vực: @v.KhuVucApDung</div>
+                                    }
+                                    else
+                                    {
+                                        <div><i class="fa-solid fa-globe me-1"></i>Toàn hệ thống</div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
     </div>
 
     @if (!Model.Any())
@@ -32,6 +130,7 @@
                             <th>Ngày Check-out</th>
                             <th>Ghi chú / Nguồn</th>
                             <th>Trạng thái</th>
+                            <th>Đánh giá</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -71,6 +170,37 @@
                                 <td>
                                     <span class="badge @statusBadge rounded-2 px-2 py-1">@dp.TrangThai</span>
                                 </td>
+                                <td>
+                                    @if (dp.TrangThai == "Đã thanh toán" || dp.TrangThai == "Đã thanh toán (Online)")
+                                    {
+                                        var review = reviews.ContainsKey(dp.MaDP) ? reviews[dp.MaDP] : null;
+                                        if (review != null)
+                                        {
+                                            <div class="text-warning small" title="@review.NhanXet" style="cursor: help;">
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    <i class="fa-@(i <= review.SoSao ? "solid" : "regular") fa-star" style="color: #FFC107;"></i>
+                                                }
+                                                @if (!string.IsNullOrEmpty(review.NhanXet))
+                                                {
+                                                    <span class="d-block text-muted small text-truncate" style="max-width: 150px;">@review.NhanXet</span>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-outline-warning btn-sm rounded-3 btn-review" 
+                                                    data-bs-toggle="modal" data-bs-target="#reviewModal" 
+                                                    data-booking-id="@dp.MaDP" data-room-name="Phòng @dp.MaPhong — @dp.Phong.LoaiPhong.TenLoai">
+                                                <i class="fa-regular fa-star me-1"></i> Đánh giá
+                                            </button>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">—</span>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -79,3 +209,132 @@
         </div>
     }
 </div>
+
+<!-- Modal Đánh Giá -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0" style="background-color: #0D0D0F; color: #C8A96E; border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                <h5 class="modal-title fw-bold font-serif" id="reviewModalLabel">✦ Đánh giá chất lượng dịch vụ</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Booking" asp-action="SubmitReview" method="post">
+                <input type="hidden" name="bookingId" id="modalBookingId" />
+                <div class="modal-body py-4">
+                    <p class="text-muted small mb-3">Vui lòng chia sẻ trải nghiệm của bạn về phòng:</p>
+                    <h6 class="fw-bold mb-4 text-dark font-serif" id="modalRoomName"></h6>
+
+                    <!-- Chọn Số Sao -->
+                    <div class="mb-4 text-center">
+                        <label class="form-label d-block text-muted small text-uppercase fw-bold mb-2">Số sao đánh giá</label>
+                        <div class="star-rating fs-2">
+                            <input type="hidden" name="rating" id="modalRating" value="5" />
+                            <i class="fa-solid fa-star text-warning star-icon cursor-pointer" data-value="1" style="color: #FFC107;"></i>
+                            <i class="fa-solid fa-star text-warning star-icon cursor-pointer" data-value="2" style="color: #FFC107;"></i>
+                            <i class="fa-solid fa-star text-warning star-icon cursor-pointer" data-value="3" style="color: #FFC107;"></i>
+                            <i class="fa-solid fa-star text-warning star-icon cursor-pointer" data-value="4" style="color: #FFC107;"></i>
+                            <i class="fa-solid fa-star text-warning star-icon cursor-pointer" data-value="5" style="color: #FFC107;"></i>
+                        </div>
+                        <span class="small text-muted" id="ratingDesc">Rất hài lòng</span>
+                    </div>
+
+                    <!-- Góp ý / Nhận xét -->
+                    <div class="mb-3">
+                        <label for="reviewComment" class="form-label text-muted small text-uppercase fw-bold">Góp ý & Nhận xét</label>
+                        <textarea class="form-control rounded-3" id="reviewComment" name="comment" rows="4" maxlength="3000" placeholder="Viết đánh giá của bạn ở đây... (Tối đa 500 từ)"></textarea>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span class="small text-muted" id="wordCountInfo">Số từ: 0 / 500</span>
+                            <span class="text-danger small d-none" id="wordLimitWarning"><i class="fa-solid fa-triangle-exclamation me-1"></i>Vượt quá 500 từ!</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-dark rounded-3 px-4" id="btnSubmitReview" style="background-color: #0D0D0F; color: #C8A96E; border-color: #0D0D0F;">Gửi đánh giá</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Khi nhấn nút Đánh giá, gán thông tin vào modal
+            $('.btn-review').click(function() {
+                var bookingId = $(this).data('booking-id');
+                var roomName = $(this).data('room-name');
+                
+                $('#modalBookingId').val(bookingId);
+                $('#modalRoomName').text(roomName);
+                
+                // Reset rating & comment
+                setStars(5);
+                $('#reviewComment').val('');
+                updateWordCount();
+            });
+
+            // Xử lý hover/click chọn sao
+            var starDescriptions = {
+                1: 'Rất không hài lòng',
+                2: 'Không hài lòng',
+                3: 'Bình thường',
+                4: 'Hài lòng',
+                5: 'Rất hài lòng'
+            };
+
+            $('.star-icon').click(function() {
+                var val = $(this).data('value');
+                setStars(val);
+            });
+
+            function setStars(val) {
+                $('#modalRating').val(val);
+                $('#ratingDesc').text(starDescriptions[val]);
+                
+                $('.star-icon').each(function() {
+                    var starVal = $(this).data('value');
+                    if (starVal <= val) {
+                        $(this).removeClass('fa-regular').addClass('fa-solid');
+                    } else {
+                        $(this).removeClass('fa-solid').addClass('fa-regular');
+                    }
+                });
+            }
+
+            // Đếm số từ trong ô comment
+            $('#reviewComment').on('input', function() {
+                updateWordCount();
+            });
+
+            function updateWordCount() {
+                var text = $('#reviewComment').val().trim();
+                var words = text ? text.split(/\s+/) : [];
+                var count = words.length;
+                
+                $('#wordCountInfo').text('Số từ: ' + count + ' / 500');
+                
+                if (count > 500) {
+                    $('#wordCountInfo').addClass('text-danger');
+                    $('#wordLimitWarning').removeClass('d-none');
+                    $('#btnSubmitReview').prop('disabled', true);
+                } else {
+                    $('#wordCountInfo').removeClass('text-danger');
+                    $('#wordLimitWarning').addClass('d-none');
+                    $('#btnSubmitReview').prop('disabled', false);
+                }
+            }
+        });
+    </script>
+    <style>
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .star-icon {
+            transition: transform 0.1s ease;
+        }
+        .star-icon:hover {
+            transform: scale(1.15);
+        }
+    </style>
+}

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -110,12 +110,12 @@ namespace QuanLyKhachSan.Controllers
         [Authorize(Roles = "admin,nhanvien")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddCustomerQuick(string hoten, string cccd, string sdt, string email)
+        public async Task<IActionResult> AddCustomerQuick(string hoten, string cccd, string? sdt, string? email)
         {
-            if (string.IsNullOrWhiteSpace(hoten) || string.IsNullOrWhiteSpace(cccd) || string.IsNullOrWhiteSpace(sdt))
+            if (string.IsNullOrWhiteSpace(hoten) || string.IsNullOrWhiteSpace(cccd) || (string.IsNullOrWhiteSpace(sdt) && string.IsNullOrWhiteSpace(email)))
             {
-                TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ thông tin khách hàng!";
-                return RedirectToAction("Create");
+                TempData["ErrorMessage"] = "Vui lòng nhập họ tên, CCCD và ít nhất một thông tin liên hệ (SĐT hoặc Email)!";
+                return RedirectToAction("Create", new { room = Request.Form["maphong"].ToString() });
             }
 
             // Kiểm tra trùng
@@ -123,15 +123,15 @@ namespace QuanLyKhachSan.Controllers
             if (isCccdExists)
             {
                 TempData["ErrorMessage"] = "Số CCCD này đã tồn tại trong hệ thống!";
-                return RedirectToAction("Create");
+                return RedirectToAction("Create", new { room = Request.Form["maphong"].ToString() });
             }
 
             var kh = new KhachHang
             {
                 HoTen = hoten.Trim(),
                 CCCD = cccd.Trim(),
-                SDT = sdt.Trim(),
-                Email = email?.Trim(),
+                SDT = string.IsNullOrWhiteSpace(sdt) ? "Chưa cập nhật" : sdt.Trim(),
+                Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
                 HangThanhVien = "Đồng",
                 DiemTichLuy = 0
             };
@@ -338,7 +338,101 @@ namespace QuanLyKhachSan.Controllers
                 .OrderByDescending(dp => dp.MaDP)
                 .ToListAsync();
 
+            var reviews = await _context.DanhGias
+                .Where(dg => dg.MaKH == kh.MaKH)
+                .ToDictionaryAsync(dg => dg.MaDP ?? 0);
+
+            ViewBag.Reviews = reviews;
+
+            // Lấy danh sách voucher hợp lệ của khách hàng để hiển thị
+            var today = DateTime.Today;
+            var customerVouchers = await _context.Vouchers
+                .Where(v => v.TrangThai == "active" && 
+                            v.NgayHetHan >= today && 
+                            v.SoLanDaDung < v.GioiHanDung &&
+                            (v.MaKH == null || v.MaKH == kh.MaKH))
+                .OrderByDescending(v => v.NgayTao)
+                .ToListAsync();
+
+            ViewBag.Vouchers = customerVouchers;
+            ViewBag.CustomerPoints = kh.DiemTichLuy;
+            ViewBag.CustomerTier = kh.HangThanhVien;
+
             return View(history);
+        }
+
+        [Authorize(Roles = "khach")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SubmitReview(int bookingId, int rating, string? comment)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var kh = await _context.KhachHangs.FirstOrDefaultAsync(k => k.MaTK == userId);
+            if (kh == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy thông tin khách hàng!";
+                return RedirectToAction("BookingHistory");
+            }
+
+            var booking = await _context.DatPhongs
+                .Include(dp => dp.Phong)
+                .FirstOrDefaultAsync(dp => dp.MaDP == bookingId && dp.MaKH == kh.MaKH);
+
+            if (booking == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy thông tin đơn đặt phòng!";
+                return RedirectToAction("BookingHistory");
+            }
+
+            if (booking.TrangThai != "Đã thanh toán" && booking.TrangThai != "Đã thanh toán (Online)")
+            {
+                TempData["ErrorMessage"] = "Chỉ có thể đánh giá phòng đã thanh toán và trả phòng!";
+                return RedirectToAction("BookingHistory");
+            }
+
+            var existingReview = await _context.DanhGias.FirstOrDefaultAsync(dg => dg.MaDP == bookingId);
+            if (existingReview != null)
+            {
+                TempData["ErrorMessage"] = "Đơn đặt phòng này đã được đánh giá trước đó!";
+                return RedirectToAction("BookingHistory");
+            }
+
+            if (rating < 1 || rating > 5)
+            {
+                TempData["ErrorMessage"] = "Số sao đánh giá không hợp lệ!";
+                return RedirectToAction("BookingHistory");
+            }
+
+            if (!string.IsNullOrEmpty(comment))
+            {
+                var words = comment.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                if (words.Length > 500)
+                {
+                    TempData["ErrorMessage"] = "Ý kiến góp ý không được vượt quá 500 từ!";
+                    return RedirectToAction("BookingHistory");
+                }
+            }
+
+            var danhGia = new DanhGia
+            {
+                MaKH = kh.MaKH,
+                MaLoai = booking.Phong.MaLoai,
+                MaDP = bookingId,
+                SoSao = rating,
+                NhanXet = comment?.Trim(),
+                NgayDanhGia = DateTime.Now
+            };
+
+            _context.DanhGias.Add(danhGia);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Cảm ơn bạn đã gửi đánh giá chất lượng dịch vụ!";
+            return RedirectToAction("BookingHistory");
         }
     }
 }

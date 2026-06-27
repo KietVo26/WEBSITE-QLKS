@@ -1,4 +1,4 @@
-﻿@using System.Security.Claims
+@using System.Security.Claims
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 @inject QuanLyKhachSan.Data.ApplicationDbContext DbContext
 
@@ -50,6 +50,19 @@
         <a asp-controller="Admin" asp-action="RoomMap" class="nav-item">
           <span class="icon">🏨</span> Sơ đồ phòng
         </a>
+        <a asp-controller="Admin" asp-action="Bookings" class="nav-item">
+          <span class="icon">📅</span> Quản lý Đặt phòng
+          @if (pendingCount > 0)
+          {
+            <span class="badge bg-danger ms-auto rounded-pill" style="font-size: 11px; padding: 3px 6px;">@pendingCount</span>
+          }
+        </a>
+        <a asp-controller="Admin" asp-action="Invoices" class="nav-item">
+          <span class="icon">📄</span> Quản lý Hóa đơn
+        </a>
+        <a asp-controller="Admin" asp-action="Reviews" class="nav-item">
+          <span class="icon">⭐</span> Quản lý Đánh giá
+        </a>
         <a asp-controller="Admin" asp-action="Customers" class="nav-item">
           <span class="icon">👥</span> Khách hàng
         </a>
@@ -90,7 +103,7 @@
         </button>
         <div class="topbar-title">K-Hotel <span>✦</span> Admin</div>
         
-        <a asp-controller="Admin" asp-action="RoomMap" class="notif-btn" style="text-decoration: none; position: relative;" title="@(pendingCount > 0 ? $"Có {pendingCount} đơn chờ duyệt" : "Không có thông báo mới")">
+        <a asp-controller="Admin" asp-action="Bookings" class="notif-btn" style="text-decoration: none; position: relative;" title="@(pendingCount > 0 ? $"Có {pendingCount} đơn chờ duyệt" : "Không có thông báo mới")">
           🔔
           @if (pendingCount > 0)
           {

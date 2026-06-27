@@ -1,0 +1,126 @@
+@model IEnumerable<QuanLyKhachSan.Models.HoaDon>
+@{
+    ViewData["Title"] = "Quản lý Hóa Đơn";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var search = ViewBag.Search as string;
+    var date = ViewBag.Date as string;
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold m-0"><i class="fa-solid fa-receipt text-primary me-2"></i> Danh sách Hóa Đơn</h2>
+        <p class="text-muted">Xem lịch sử hóa đơn thanh toán, doanh thu và in ấn hóa đơn khách hàng.</p>
+    </div>
+</div>
+
+<!-- SEARCH & FILTER -->
+<div class="card border-0 shadow-sm rounded-3 mb-4 bg-light">
+    <div class="card-body">
+        <form method="get" asp-controller="Admin" asp-action="Invoices" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label small fw-bold text-secondary">Tìm kiếm hóa đơn</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-0 bg-white" 
+                           placeholder="Tên khách, SĐT, mã phòng hoặc số hóa đơn..." value="@search" />
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-secondary">Lọc theo ngày thanh toán</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-0"><i class="fa-solid fa-calendar text-muted"></i></span>
+                    <input type="date" name="date" class="form-control border-0 bg-white" value="@date" />
+                </div>
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-dark flex-fill fw-semibold"><i class="fa-solid fa-filter me-1"></i> Lọc</button>
+                @if (!string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(date))
+                {
+                    <a asp-controller="Admin" asp-action="Invoices" class="btn btn-outline-secondary"><i class="fa-solid fa-rotate-left"></i> Reset</a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- LIST INVOICES -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-3" style="width: 100px;">Mã HD</th>
+                        <th style="width: 110px;">Mã Đặt</th>
+                        <th>Khách hàng</th>
+                        <th>Phòng</th>
+                        <th>Ngày thanh toán</th>
+                        <th class="text-end">Doanh thu</th>
+                        <th>Nhân viên lập</th>
+                        <th class="text-end pe-3" style="min-width: 150px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-file-invoice fs-2 mb-2 d-block"></i>
+                                Không tìm thấy hóa đơn nào phù hợp.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-3 font-monospace fw-bold text-primary">#@item.MaHD</td>
+                                <td class="font-monospace text-muted">#@item.MaDP</td>
+                                <td>
+                                    <div class="fw-semibold text-dark">@item.DatPhong.KhachHang.HoTen</div>
+                                    <div class="small text-muted"><i class="fa-solid fa-phone me-1"></i>@item.DatPhong.KhachHang.SDT</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">@item.DatPhong.MaPhong</div>
+                                    <div class="small text-muted">@item.DatPhong.Phong.LoaiPhong.TenLoai</div>
+                                </td>
+                                <td>
+                                    <div class="small text-dark fw-medium">@item.NgayLanhToan.ToString("dd/MM/yyyy")</div>
+                                    <div class="small text-muted">Giờ: @item.NgayLanhToan.ToString("HH:mm")</div>
+                                </td>
+                                <td class="text-end fw-bold text-success">
+                                    @item.TongTien.ToString("N0") đ
+                                </td>
+                                <td>
+                                    <div class="small text-dark">@(item.NhanVien?.TaiKhoan?.HoTen ?? "Hệ thống")</div>
+                                    <div class="small text-muted fs-7">@(item.NhanVien?.ChucVu ?? "Auto Pay")</div>
+                                </td>
+                                <td class="text-end pe-3">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <a asp-controller="Admin" asp-action="InvoiceDetail" asp-route-id="@item.MaHD" 
+                                           class="btn btn-outline-primary btn-sm fw-semibold shadow-sm" title="Xem chi tiết & in hóa đơn">
+                                            <i class="fa-solid fa-print"></i> Xem & In
+                                        </a>
+                                        @if (role == "admin")
+                                        {
+                                            <a asp-controller="Admin" asp-action="DeleteInvoice" asp-route-id="@item.MaHD" 
+                                               class="btn btn-outline-danger btn-sm" 
+                                               onclick="return confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa hóa đơn này khỏi hệ thống? Hành động này không thể hoàn tác!')" title="Xóa hóa đơn">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

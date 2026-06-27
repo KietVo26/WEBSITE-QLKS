@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -233,6 +233,11 @@ namespace QuanLyKhachSan.Models
         [ForeignKey("MaLoai")]
         public LoaiPhong LoaiPhong { get; set; } = null!;
 
+        public int? MaDP { get; set; }
+
+        [ForeignKey("MaDP")]
+        public DatPhong? DatPhong { get; set; }
+
         public int SoSao { get; set; } = 5;
 
         public string? NhanXet { get; set; }
@@ -315,6 +320,9 @@ namespace QuanLyKhachSan.Models
 
         [StringLength(20)]
         public string TrangThai { get; set; } = "active"; // 'active', 'inactive'
+
+        [StringLength(100)]
+        public string? KhuVucApDung { get; set; }
 
         public string? GhiChu { get; set; }
 

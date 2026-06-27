@@ -1,4 +1,4 @@
-﻿@model IEnumerable<QuanLyKhachSan.Models.Voucher>
+@model IEnumerable<QuanLyKhachSan.Models.Voucher>
 @{
     ViewData["Title"] = "Quản Lý Voucher";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
@@ -38,14 +38,25 @@
                                 <td class="ps-3"><span class="badge bg-light text-dark border fw-bold font-monospace fs-6">@v.Code</span></td>
                                 <td>
                                     <span class="fw-bold text-dark d-block">@v.TenVoucher</span>
-                                    @if (v.KhachHang != null)
-                                    {
-                                        <small class="text-primary"><i class="fa-solid fa-user me-1"></i>Dành riêng: @v.KhachHang.HoTen</small>
-                                    }
-                                    else
-                                    {
-                                        <small class="text-muted"><i class="fa-solid fa-globe me-1"></i>Toàn hệ thống</small>
-                                    }
+                                    <div class="d-flex flex-column gap-1 mt-1">
+                                        @if (v.KhachHang != null)
+                                        {
+                                            <small class="text-primary"><i class="fa-solid fa-user me-1"></i>Khách hàng: @v.KhachHang.HoTen</small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted"><i class="fa-solid fa-globe me-1"></i>Mọi khách hàng</small>
+                                        }
+                                        
+                                        @if (!string.IsNullOrEmpty(v.KhuVucApDung))
+                                        {
+                                            <small class="text-info"><i class="fa-solid fa-map-location-dot me-1"></i>Khu vực: @v.KhuVucApDung</small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted"><i class="fa-solid fa-map me-1"></i>Mọi chi nhánh</small>
+                                        }
+                                    </div>
                                 </td>
                                 <td class="fw-bold text-danger">@valueStr</td>
                                 <td>@v.GiaTriToiThieu.ToString("N0") đ</td>
@@ -80,6 +91,29 @@
                 <div class="mb-2">
                     <label class="form-label small fw-bold text-secondary">Tên Voucher (*)</label>
                     <input type="text" name="name" class="form-control" placeholder="VD: Giảm giá hè 15%" required />
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small fw-bold text-secondary">Khách hàng áp dụng (Tùy chọn)</label>
+                    <select name="makh" class="form-select">
+                        <option value="">-- Mọi khách hàng --</option>
+                        @foreach (var c in ViewBag.Customers as IEnumerable<QuanLyKhachSan.Models.KhachHang> ?? new List<QuanLyKhachSan.Models.KhachHang>())
+                        {
+                            <option value="@c.MaKH">@c.HoTen (CCCD: @c.CCCD)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small fw-bold text-secondary">Khu vực áp dụng (Tùy chọn)</label>
+                    <select name="khuvuc" class="form-select">
+                        <option value="">-- Mọi chi nhánh --</option>
+                        <option value="Hồ Chí Minh">Hồ Chí Minh</option>
+                        <option value="Phan Thiết">Phan Thiết</option>
+                        <option value="Hà Nội">Hà Nội</option>
+                        <option value="Đà Nẵng">Đà Nẵng</option>
+                        <option value="Tây Ninh">Tây Ninh</option>
+                    </select>
                 </div>
 
                 <div class="row g-2 mb-2">
